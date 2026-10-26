@@ -12,10 +12,13 @@ dependencies = [
     "alembic>=1.16,<2",
     "psycopg[binary]>=3.2,<4",
     "python-dotenv>=1,<2",
+    "fastapi>=0.115,<1",
+    "uvicorn>=0.30,<1",
+    "pydantic>=2.9,<3",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8,<10"]
+dev = ["pytest>=8,<10", "httpx>=0.27,<1"]
 
 [tool.setuptools.packages.find]
 include = ["tourney_app*"]
