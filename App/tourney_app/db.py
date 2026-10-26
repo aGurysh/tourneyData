@@ -2,10 +2,13 @@
 
 import os
 from pathlib import Path
+from typing import Annotated
 
 from dotenv import load_dotenv
+from fastapi import Depends, Request
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.engine import make_url
+from sqlalchemy.orm import Session
 
 APP_ROOT = Path(__file__).resolve().parents[1]
 
@@ -25,5 +28,14 @@ def create_db_engine(url: str | None = None) -> Engine:
     return create_engine(
         url or database_url(),
         pool_pre_ping=True,
-        connect_args={"options": "-c timezone=UTC"},
+        connect_args={"options": "-c timezone=UTC", "connect_timeout": 5},
     )
+
+
+def get_session(request: Request):
+    """One session per request; close/rollback without committing any writes."""
+    with request.app.state.session_factory() as session:
+        yield session
+
+
+DatabaseSession = Annotated[Session, Depends(get_session)]

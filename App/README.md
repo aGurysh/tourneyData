@@ -200,3 +200,69 @@ until any future writer implements compatible concurrency rules.
 
 Exit codes: `0` successful preview/import; `2` file validation or review conflict;
 `1` database failure. The command never fetches new source data automatically.
+
+## Run the API
+
+From `App`, install/update the dependencies and start the development server:
+
+```bash
+.venv/bin/python -m pip install -e '.[dev]'
+.venv/bin/uvicorn tourney_app.main:app --reload
+```
+
+Keep PostgreSQL running. Visit [interactive API documentation](http://localhost:8000/docs)
+to try the endpoints, or fetch [the tournament list](http://localhost:8000/tournaments).
+The machine-readable OpenAPI document is at `/openapi.json`.
+
+| Endpoint | Response |
+| --- | --- |
+| `GET /health` | `{"status":"ok"}` when PostgreSQL is reachable; otherwise HTTP 503. |
+| `GET /tournaments` | Tournament metadata, catch counts, and winning/top-10% scores. Optional `location_id` filter. |
+| `GET /tournaments/{id}` | Tournament metadata, catch count, and eligible waterbodies with boundary notes. |
+| `GET /tournaments/{id}/catches` | Catches with nullable species ID/name. Optional `species_id` and `angler_name` filters. |
+| `GET /locations` | Waterbody IDs, names, and states. |
+
+All collection endpoints accept `limit` (default 50, range 1–200) and `offset`
+(default 0, nonnegative). Responses use this envelope:
+
+```json
+{"items": [], "total": 0, "limit": 50, "offset": 0}
+```
+
+`total` counts every matching row before pagination. Tournament ordering is date
+descending, then ID ascending. Catch ordering is time ascending, then ID
+ascending. Locations and tournament waterbodies are ordered by name, then ID.
+The angler filter is a case-insensitive exact match; filters combine with AND.
+An unknown species or location filter returns an empty collection. Unknown
+tournament IDs return HTTP 404, including on the catch endpoint. Invalid
+parameters return HTTP 422.
+
+Lengths are decimal strings such as `"19.25"`; catch times are UTC ISO timestamps
+such as `"2026-07-18T12:30:00Z"`. Tournament dates are calendar date strings, and
+their IANA timezones remain available for local display. Waterbody links describe
+eligible waters; they do not assign individual catches to a waterbody. Catch
+coverage and the photo-time proxy limitations from the source still apply.
+
+Example requests:
+
+```bash
+curl http://localhost:8000/health
+curl 'http://localhost:8000/tournaments?limit=10'
+curl 'http://localhost:8000/tournaments/1/catches?species_id=1&limit=20'
+curl --get 'http://localhost:8000/tournaments/1/catches' --data-urlencode 'angler_name=Rick McIntyre'
+```
+
+The API uses the same `.env`/`DATABASE_URL` as the importer. It creates one engine
+at startup, closes it at shutdown, and opens/closes a session per request without
+committing writes. It does not run migrations or imports at startup. Database
+failures return HTTP 503 without exposing SQL parameters or connection secrets.
+
+`CORS_ORIGINS` is a comma-separated list of allowed frontend origins, defaulting
+to `http://localhost:5173`. For another frontend port, set it in `.env` and restart
+the API. For example: `CORS_ORIGINS=http://localhost:5173,http://localhost:3000`.
+Only GET methods are enabled for browser CORS. This initial API has no
+authentication or write endpoints; the development server binds to localhost.
+
+API tests use the same isolated PostgreSQL test schema described above. They
+cover endpoint results, pagination/filtering, empty/missing data, decimal/time
+serialization, database failures, CORS, engine cleanup, and unchanged table data.
