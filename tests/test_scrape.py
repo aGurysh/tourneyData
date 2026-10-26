@@ -38,6 +38,56 @@ def first_fish(raw):
 
 
 class ExportTests(unittest.TestCase):
+    def test_tournament_lengths_use_full_field_and_nearest_finishing_place(self):
+        raw = snapshot()
+        first = raw['standings']['results'][0][0]
+        first['total_fish_length'] = '20.00'
+        first['submissions'][0]['fish_length'] = '20.00'
+        other = copy.deepcopy(first)
+        other.update(user_id='12', total_fish_length='20.25')
+        other['submissions'][0].update(fish_length='20.25', submission_id='124')
+        # Unsorted scores and nine zero-fish entrants: nearest place to 1.1 is 1.
+        raw['standings']['results'][0] = [first, other] + [
+            {'user_id': str(100 + index), 'angler_name': 'Zero Fish'} for index in range(9)]
+        for limit in (None, 1):
+            result = _build_export(raw, {}, max_anglers=limit)
+            self.assertEqual(result['tournament']['winning_length_inches'], '20.25')
+            self.assertEqual(result['tournament']['top_10_percent_length_inches'], '20.25')
+        self.assertTrue(_build_export(raw, {})['summary']['ready_for_review'])
+
+    def test_top_decile_place_for_exact_fractional_and_small_fields(self):
+        for count, place in ((100, 10), (48, 5), (73, 7), (15, 2), (4, 1)):
+            with self.subTest(count=count):
+                raw = snapshot()
+                raw['standings']['results'][0] = [
+                    {'user_id': str(index + 1), 'total_fish_length': str(index + 1)}
+                    for index in range(count)]
+                result = _build_export(raw, {})
+                self.assertEqual(result['tournament']['winning_length_inches'], f'{count}.00')
+                self.assertEqual(result['tournament']['top_10_percent_length_inches'],
+                                 f'{count - place + 1}.00')
+                self.assertNotIn('total_length_inches', result['tournament'])
+
+    def test_invalid_standings_scores_do_not_produce_tournament_lengths(self):
+        for score in ('NaN', 'Infinity', '-1', '18.251', 'invalid', None):
+            with self.subTest(score=score):
+                raw = snapshot()
+                raw['standings']['results'][0][0]['total_fish_length'] = score
+                result = _build_export(raw, {})
+                self.assertIsNone(result['tournament']['winning_length_inches'])
+                self.assertIsNone(result['tournament']['top_10_percent_length_inches'])
+                self.assertFalse(result['summary']['ready_for_review'])
+
+    def test_small_and_empty_field_lengths(self):
+        result = _build_export(snapshot(), {})
+        self.assertEqual(result['tournament']['winning_length_inches'], '18.25')
+        self.assertEqual(result['tournament']['top_10_percent_length_inches'], '18.25')
+        raw = snapshot()
+        raw['standings']['results'] = [[]]
+        result = _build_export(raw, {})
+        self.assertIsNone(result['tournament']['winning_length_inches'])
+        self.assertIsNone(result['tournament']['top_10_percent_length_inches'])
+
     def test_export_date_precise_utc_decimal_species_and_source_ids(self):
         result = _build_export(snapshot(), {'locations': [{'name': 'French Creek', 'state': 'PA'}]})
         self.assertEqual(result['tournament']['date'], '2026-07-18')

@@ -43,6 +43,18 @@ has an ISO calendar date and an IANA timezone. The exporter checks raw photo
 times against their formatted equivalents. It does not use `date_submitted`
 as a catch timestamp.
 
+Tournament fields `winning_length_inches` and `top_10_percent_length_inches`
+are decimal strings derived from the full captured standings, even when
+`--max-anglers` limits the catch export. Winning length is the first-place
+angler's score. Top 10% length is the score at the finishing place nearest
+`source_anglers / 10`, rounding .5 upward with a minimum place of 1. Thus 100
+anglers use 10th place, 48 use 5th, and 73 use 7th. Zero-fish anglers count
+in the field size. Scores are sorted highest first; tied scores have the same
+value at the cutoff. An empty field exports both lengths as null. Invalid
+scores make both fields null and add a blocking issue; missing scores for
+zero-fish anglers count as zero. These scores exclude culled fish absent
+from the standings.
+
 Review `summary` and `issues` before writing anything to the database:
 
 - `source_anglers`, `anglers_processed`, and `anglers_with_fish` describe the

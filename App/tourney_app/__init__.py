@@ -1,0 +1,1 @@
+"""Fishing tournament application backend."""
