@@ -90,6 +90,35 @@ def _source_rows(standings):
     return rows
 
 
+def _standings_lengths(rows, issues):
+    """Select winning and nearest top-decile scores from the complete field."""
+    scores = []
+    seen = set()
+    for row_index, row in enumerate(rows):
+        try:
+            if str(row["user_id"]) in seen:
+                raise ValueError("Duplicate angler prevents tournament length calculation")
+            seen.add(str(row["user_id"]))
+            value = row.get("total_fish_length")
+            if value in (None, "") and not row.get("submissions"):
+                value = 0
+            score = Decimal(str(value))
+            if not score.is_finite() or score < 0 or score != score.quantize(Decimal("0.01")):
+                raise ValueError("Invalid standings score for tournament length calculation")
+            scores.append(score)
+        except (InvalidOperation, ValueError, TypeError) as error:
+            issues.append({"severity": "error", "row_index": row_index,
+                           "message": f"Cannot calculate tournament lengths: {error}"})
+            return None, None
+    if not scores:
+        return None, None
+    scores.sort(reverse=True)
+    # Nearest finishing place to 10% of the field; round .5 upward.
+    top_place = max(1, (len(scores) + 5) // 10)
+    return (str(scores[0].quantize(Decimal("0.01"))),
+            str(scores[top_place - 1].quantize(Decimal("0.01"))))
+
+
 def _fetch_snapshot(url, headed, timeout_ms, snapshot_path):
     raw = {"source_url": url, "scraped_at": datetime.now(timezone.utc).isoformat(),
            "capture_version": 2, "collection_complete": False}
@@ -155,6 +184,7 @@ def _build_export(raw, config, max_anglers=None):
     except (KeyError, TypeError, ValueError) as error:
         raise ValueError("Could not determine the scoring fish limit") from error
     issues = []
+    winning_length, top_10_percent_length = _standings_lengths(rows, issues)
     locations = config.get("locations", [])
     if not isinstance(locations, list):
         raise ValueError("locations must be a list")
@@ -257,7 +287,9 @@ def _build_export(raw, config, max_anglers=None):
             "tournament": {"name": meta["tournament_title"].strip(), "date": day.isoformat(),
                            "timezone": zone_name, "source_url": url,
                            "external_id": str(meta["id"]) if meta.get("id") else None,
-                           "catch_coverage": "standings_only"},
+                           "catch_coverage": "standings_only",
+                           "winning_length_inches": winning_length,
+                           "top_10_percent_length_inches": top_10_percent_length},
             "locations": locations, "catches": catches, "summary": summary, "issues": issues}
 
 

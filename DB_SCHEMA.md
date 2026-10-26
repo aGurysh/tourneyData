@@ -17,10 +17,25 @@ and locations assigned manually before import.
 | `source_url`     | text           | Required canonical source standings URL; unique for the initial TourneyX import.                 |
 | `external_id`    | text           | Optional TourneyX tournament identifier; unique when present.                                    |
 | `catch_coverage` | text           | Required; initially `standings_only`.                                                            |
+| `winning_length_inches` | numeric(12,2) | First-place angler's standings score in inches; nonnegative, nullable if unavailable. |
+| `top_10_percent_length_inches` | numeric(12,2) | Standings score at the finishing place nearest 10% of the field; nonnegative, nullable if unavailable. |
 
 The calendar date can be displayed as day/month/year. `DATE` stores the date
 without a time or display format. The initial model assumes one date per
 tournament; multi-day event support would require a later decision.
+
+Length fields use the complete captured standings, including zero-fish anglers
+in the field size. `winning_length_inches` is the highest score.
+`top_10_percent_length_inches` is the score at the finishing place nearest
+`angler_count / 10`, rounding .5 upward with a minimum place of 1. For example,
+100 anglers use 10th place, 48 use 5th, and 73 use 7th. Select scores sorted
+from highest to lowest; tied scores have the same value at the cutoff.
+An empty field leaves both fields null. Invalid or missing scores for anglers
+with fish leave both fields null and block import review; a missing score for
+an angler without fish counts as zero. These scores cover standings fish,
+excluding culled fish absent from the standings. They are calculated from the
+full snapshot even for a partial catch export and should be recalculated
+whenever the standings are refreshed.
 
 ### locations
 
