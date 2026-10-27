@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 
 import { getTournament } from "@/api/tournaments"
 import type { TournamentDetail } from "@/api/tournaments"
+import { SPECIES_COLORS } from "@/constants/species"
 import SpeciesCatchRatio from "./SpeciesCatchRatio"
 
 function formatScore(score: string | null) {
@@ -82,11 +83,9 @@ export default function TournamentSummaryCard({ tournamentId }: { tournamentId: 
                 <span
                   key={species}
                   className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
-                    species === "Largemouth Bass"
-                      ? "bg-green-100 text-green-800"
-                      : species === "Smallmouth Bass"
-                        ? "bg-[#efdfcf] text-[#70421f]"
-                        : "bg-muted text-foreground"
+                    SPECIES_COLORS[species]?.background ?? "bg-muted"
+                  } ${
+                    SPECIES_COLORS[species]?.text ?? "text-foreground"
                   }`}
                 >
                   {species === "Largemouth Bass" ? "Largemouth" : species === "Smallmouth Bass" ? "Smallmouth" : species}
