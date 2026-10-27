@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "shadcn/tailwind.css";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -13,6 +15,7 @@
 }
 
 :root {
+  color-scheme: light;
   font-family: ui-sans-serif, system-ui, sans-serif;
   --background: oklch(0.985 0.002 180);
   --foreground: oklch(0.22 0.02 180);
@@ -21,6 +24,17 @@
   --muted-foreground: oklch(0.46 0.015 180);
   --border: oklch(0.9 0.008 180);
   --ring: oklch(0.5 0.08 180);
+}
+
+.dark {
+  color-scheme: dark;
+  --background: oklch(0.16 0.012 180);
+  --foreground: oklch(0.94 0.006 180);
+  --card: oklch(0.21 0.014 180);
+  --muted: oklch(0.27 0.015 180);
+  --muted-foreground: oklch(0.73 0.015 180);
+  --border: oklch(0.33 0.018 180);
+  --ring: oklch(0.72 0.09 180);
 }
 
 @layer base {
