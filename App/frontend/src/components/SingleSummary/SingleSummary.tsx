@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { usePersistentState } from "@/hooks/usePersistentState"
 import TournamentSummaryCard from "./TournamentSummaryCard"
 import TournamentBiteWindows from "./TournamentBiteWindows"
+import TournamentWeatherCard from "./TournamentWeatherCard"
 
 function isTournamentId(value: string): value is string {
   return value === "" || (/^[1-9]\d*$/.test(value) && Number.isSafeInteger(Number(value)))
@@ -98,6 +99,10 @@ export default function SingleSummary() {
         />
         <TournamentBiteWindows
           key={`bite-windows-${availableTournamentId}`}
+          tournamentId={availableTournamentId ? Number(availableTournamentId) : null}
+        />
+        <TournamentWeatherCard
+          key={`weather-${availableTournamentId}`}
           tournamentId={availableTournamentId ? Number(availableTournamentId) : null}
         />
       </div>

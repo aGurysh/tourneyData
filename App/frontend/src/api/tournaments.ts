@@ -39,6 +39,35 @@ export function getTournament(id: number, signal?: AbortSignal) {
   return get<TournamentDetail>(`/tournaments/${id}`, signal)
 }
 
+export interface WeatherHour {
+  time: string
+  temperature_f: number | null
+  pressure_hpa: number | null
+  cloud_cover_percent: number | null
+  wind_speed_mph: number | null
+  wind_direction_degrees: number | null
+}
+
+export interface TournamentWeather {
+  tournament_id: number
+  source: string
+  source_url: string
+  attribution: string
+  data_kind: "historical_reanalysis"
+  timezone: string
+  starts_at: string
+  ends_at: string
+  requested_coordinates: { latitude: number; longitude: number }
+  grid_coordinates: { latitude: number; longitude: number }
+  fetched_at: string
+  coverage: "complete" | "partial"
+  hourly: WeatherHour[]
+}
+
+export function getTournamentWeather(id: number, signal?: AbortSignal) {
+  return get<TournamentWeather>(`/tournaments/${id}/weather`, signal)
+}
+
 interface Page<T> {
   items: T[]
   total: number
