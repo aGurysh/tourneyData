@@ -6,6 +6,22 @@ export interface Tournament {
   date: string
 }
 
+export interface TournamentDetail extends Tournament {
+  winning_length_inches: string | null
+  top_10_percent_length_inches: string | null
+  locations: {
+    id: number
+    name: string
+    state: string | null
+    boundary_notes: string | null
+  }[]
+  species_caught: string[]
+}
+
+export function getTournament(id: number, signal?: AbortSignal) {
+  return get<TournamentDetail>(`/tournaments/${id}`, signal)
+}
+
 interface Page<T> {
   items: T[]
   total: number

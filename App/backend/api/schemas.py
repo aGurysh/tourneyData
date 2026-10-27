@@ -45,6 +45,7 @@ class TournamentResponse(BaseModel):
 
 class TournamentDetail(TournamentResponse):
     locations: list[TournamentWaterbody]
+    species_caught: list[str]
 
 
 class CatchResponse(BaseModel):
