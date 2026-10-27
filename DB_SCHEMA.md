@@ -12,8 +12,10 @@ and locations assigned manually before import.
 | ---------------- | -------------- | ------------------------------------------------------------------------------------------------ |
 | `id`             | bigint         | Primary key, generated internally.                                                               |
 | `name`           | text           | Required tournament name.                                                                        |
-| `date`           | date           | Required calendar date; no tournament start or end timestamps.                                   |
+| `date`           | date           | Required calendar date. |
 | `timezone`       | text           | Required IANA timezone, such as `America/New_York`, for interpreting and displaying catch times. |
+| `starts_at` / `ends_at` | timestamp with time zone | Nullable pair of source tournament start/end times, normalized to UTC; end must follow start. |
+| `weather_latitude` / `weather_longitude` | double precision | Nullable coordinate pair parsed from source metadata `lat_lng`; latitude within -90 to 90, longitude within -180 to 180. |
 | `source_url`     | text           | Required canonical source standings URL; unique for the initial TourneyX import.                 |
 | `external_id`    | text           | Optional TourneyX tournament identifier; unique when present.                                    |
 | `catch_coverage` | text           | Required; initially `standings_only`.                                                            |
@@ -21,8 +23,10 @@ and locations assigned manually before import.
 | `top_10_percent_length_inches` | numeric(12,2) | Standings score at the finishing place nearest 10% of the field; nonnegative, nullable if unavailable. |
 
 The calendar date can be displayed as day/month/year. `DATE` stores the date
-without a time or display format. The initial model assumes one date per
-tournament; multi-day event support would require a later decision.
+without a time or display format. The model keeps one date per tournament.
+Duration fields describe that day's tournament hours. Weather coordinates
+represent the source's event point, whose relationship to the fishing area
+is not independently verified; they do not locate catches or eligible waters.
 
 Length fields use the complete captured standings, including zero-fish anglers
 in the field size. `winning_length_inches` is the highest score.

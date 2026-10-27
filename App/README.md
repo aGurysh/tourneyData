@@ -210,6 +210,20 @@ spellings are not fuzzy-matched; keep canonical names consistent across exports.
 
 ### Refresh an existing tournament
 
+To patch only tournament duration and weather coordinates from a rebuilt
+export, preserving all catch IDs, waterbody links, scores, and other metadata:
+
+```bash
+.venv/bin/alembic upgrade head
+.venv/bin/python -m backend.ingestion.cli ../output/kawpa-allegheny-achigan-showdown.json --metadata-only
+.venv/bin/python -m backend.ingestion.cli ../output/kawpa-allegheny-achigan-showdown.json --metadata-only --apply
+```
+
+The patch requires an existing tournament with matching source identity,
+date, and timezone. Its preview shows old and new values. `--metadata-only`
+and `--replace` are mutually exclusive. Legacy exports without these optional
+fields remain importable and do not erase existing weather metadata.
+
 The source URL identifies the tournament, with external IDs also checked for
 identity conflicts. By default an existing tournament is rejected, preventing
 duplicate inserts. To load a newer reviewed snapshot, preview and apply with

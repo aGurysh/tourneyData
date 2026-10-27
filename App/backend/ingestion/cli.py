@@ -16,14 +16,16 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("path", type=Path, help="Cleaned schema_version 1 JSON export")
     parser.add_argument("--apply", action="store_true", help="Write the import; default is read-only preview")
-    parser.add_argument("--replace", action="store_true", help="Replace an existing tournament's metadata, catches, and waterbody links")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--replace", action="store_true", help="Replace an existing tournament's metadata, catches, and waterbody links")
+    mode.add_argument("--metadata-only", action="store_true", help="Patch only duration and weather coordinates on an existing tournament")
     args = parser.parse_args(argv)
     engine = None
     try:
         export = load_export(args.path)
         engine = create_db_engine()
         with engine.begin() as connection:
-            plan = import_export(connection, export, apply=args.apply, replace=args.replace)
+            plan = import_export(connection, export, apply=args.apply, replace=args.replace, metadata_only=args.metadata_only)
         print(json.dumps(plan, indent=2))
         if not args.apply:
             print("Preview only. Review the JSON, timestamps, and locations; rerun with --apply to import.")

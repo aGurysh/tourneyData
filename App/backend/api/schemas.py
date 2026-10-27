@@ -41,6 +41,10 @@ class TournamentResponse(BaseModel):
     winning_length_inches: Decimal | None
     top_10_percent_length_inches: Decimal | None
     catch_count: int
+    starts_at: datetime | None
+    ends_at: datetime | None
+    weather_latitude: float | None
+    weather_longitude: float | None
 
 
 class SpeciesCatchCount(BaseModel):

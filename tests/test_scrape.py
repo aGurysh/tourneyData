@@ -38,6 +38,27 @@ def first_fish(raw):
 
 
 class ExportTests(unittest.TestCase):
+    def test_weather_coordinates_and_missing_or_invalid_values(self):
+        for value in ('41.09588,-79.68106', None, '', 'bad', '91,0', '0,-181', 'NaN,0', '1,2,3'):
+            with self.subTest(value=value):
+                raw = snapshot()
+                raw['metadata']['lat_lng'] = value
+                result = _build_export(raw, {})
+                if value == '41.09588,-79.68106':
+                    self.assertEqual(result['tournament']['weather_latitude'], '41.09588')
+                    self.assertEqual(result['tournament']['weather_longitude'], '-79.68106')
+                else:
+                    self.assertIsNone(result['tournament']['weather_latitude'])
+                    self.assertIsNone(result['tournament']['weather_longitude'])
+                    self.assertTrue(any('weather location unavailable' in issue['message'] for issue in result['issues']))
+                self.assertTrue(result['summary']['ready_for_review'])
+
+    def test_reversed_tournament_duration_rejected(self):
+        raw = snapshot()
+        raw['metadata']['end_date'] = '2026-07-18 05:00:00'
+        with self.assertRaisesRegex(ValueError, 'end must be after'):
+            _build_export(raw, {})
+
     def test_tournament_lengths_use_full_field_and_nearest_finishing_place(self):
         raw = snapshot()
         first = raw['standings']['results'][0][0]
@@ -91,7 +112,8 @@ class ExportTests(unittest.TestCase):
     def test_export_date_precise_utc_decimal_species_and_source_ids(self):
         result = _build_export(snapshot(), {'locations': [{'name': 'French Creek', 'state': 'PA'}]})
         self.assertEqual(result['tournament']['date'], '2026-07-18')
-        self.assertNotIn('starts_at', result['tournament'])
+        self.assertEqual(result['tournament']['starts_at'], '2026-07-18T09:45:00+00:00')
+        self.assertEqual(result['tournament']['ends_at'], '2026-07-18T18:30:00+00:00')
         self.assertEqual(result['tournament']['timezone'], 'America/New_York')
         self.assertEqual(result['catches'][0], {
             'angler_name': 'Test Angler', 'catch_time': '2026-07-18T11:14:23+00:00',

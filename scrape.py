@@ -184,6 +184,22 @@ def _build_export(raw, config, max_anglers=None):
     except (KeyError, TypeError, ValueError) as error:
         raise ValueError("Could not determine the scoring fish limit") from error
     issues = []
+    starts_at = _utc_timestamp(datetime.fromisoformat(meta["start_date"]), zone)
+    ends_at = _utc_timestamp(datetime.fromisoformat(meta["end_date"]), zone)
+    if ends_at <= starts_at:
+        raise ValueError("Tournament end must be after its start")
+    latitude = longitude = None
+    if meta.get("lat_lng"):
+        try:
+            latitude, longitude = (Decimal(part.strip()) for part in meta["lat_lng"].split(","))
+            if not (latitude.is_finite() and longitude.is_finite()
+                    and -90 <= latitude <= 90 and -180 <= longitude <= 180):
+                raise ValueError
+        except (InvalidOperation, ValueError, AttributeError):
+            latitude = longitude = None
+            issues.append({"severity": "warning", "message": "Invalid lat_lng; weather location unavailable"})
+    else:
+        issues.append({"severity": "warning", "message": "Missing lat_lng; weather location unavailable"})
     winning_length, top_10_percent_length = _standings_lengths(rows, issues)
     locations = config.get("locations", [])
     if not isinstance(locations, list):
@@ -286,6 +302,9 @@ def _build_export(raw, config, max_anglers=None):
     return {"schema_version": 1, "scraped_at": raw["scraped_at"],
             "tournament": {"name": meta["tournament_title"].strip(), "date": day.isoformat(),
                            "timezone": zone_name, "source_url": url,
+                           "starts_at": starts_at.isoformat(), "ends_at": ends_at.isoformat(),
+                           "weather_latitude": str(latitude) if latitude is not None else None,
+                           "weather_longitude": str(longitude) if longitude is not None else None,
                            "external_id": str(meta["id"]) if meta.get("id") else None,
                            "catch_coverage": "standings_only",
                            "winning_length_inches": winning_length,

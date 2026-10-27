@@ -4,7 +4,7 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import (
-    BigInteger, CheckConstraint, Date, DateTime, ForeignKey, Identity,
+    BigInteger, CheckConstraint, Date, DateTime, Double, ForeignKey, Identity,
     Index, MetaData, Numeric, Text, UniqueConstraint,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -23,6 +23,10 @@ class Base(DeclarativeBase):
 class Tournament(Base):
     __tablename__ = "tournaments"
     __table_args__ = (
+        CheckConstraint("weather_latitude BETWEEN -90 AND 90", name="weather_latitude_range"),
+        CheckConstraint("weather_longitude BETWEEN -180 AND 180", name="weather_longitude_range"),
+        CheckConstraint("(weather_latitude IS NULL) = (weather_longitude IS NULL)", name="weather_coordinates_pair"),
+        CheckConstraint("(starts_at IS NULL) = (ends_at IS NULL) AND (ends_at IS NULL OR ends_at > starts_at)", name="duration_valid"),
         CheckConstraint(
             "winning_length_inches >= 0 AND winning_length_inches <> 'NaN'::numeric",
             name="winning_length_nonnegative",
@@ -37,6 +41,10 @@ class Tournament(Base):
     name: Mapped[str] = mapped_column(Text)
     date: Mapped[date] = mapped_column(Date)
     timezone: Mapped[str] = mapped_column(Text)
+    starts_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    ends_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    weather_latitude: Mapped[float | None] = mapped_column(Double)
+    weather_longitude: Mapped[float | None] = mapped_column(Double)
     source_url: Mapped[str] = mapped_column(Text, unique=True)
     external_id: Mapped[str | None] = mapped_column(Text, unique=True)
     catch_coverage: Mapped[str] = mapped_column(Text, server_default="standings_only")

@@ -5,6 +5,7 @@ from datetime import date, datetime, timezone
 from decimal import Decimal, InvalidOperation
 import json
 from pathlib import Path
+import math
 from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -105,6 +106,33 @@ def load_export(path: Path) -> Export:
     except (ValueError, ZoneInfoNotFoundError):
         raise ImportError("Tournament date or IANA timezone is invalid.") from None
     tournament["external_id"] = string(source.get("external_id"), "tournament.external_id", optional=True)
+    # Preserve old exports: only update weather metadata when the fields are present.
+    for key, limit in (("weather_latitude", 90), ("weather_longitude", 180)):
+        if key in source:
+            value = source[key]
+            if value is not None:
+                try:
+                    if isinstance(value, bool):
+                        raise ValueError
+                    value = float(value)
+                    if not math.isfinite(value) or not -limit <= value <= limit:
+                        raise ValueError
+                except (TypeError, ValueError, OverflowError):
+                    raise ImportError(f"tournament.{key} must be a finite coordinate within +/-{limit}.") from None
+            tournament[key] = value
+    for keys in (("weather_latitude", "weather_longitude"), ("starts_at", "ends_at")):
+        if any(key in source for key in keys):
+            if not all(key in source for key in keys) or ((source[keys[0]] is None) != (source[keys[1]] is None)):
+                raise ImportError(f"tournament.{keys[0]} and {keys[1]} must be supplied together.")
+    for key in ("starts_at", "ends_at"):
+        if key in source:
+            tournament[key] = timestamp(source[key], f"tournament.{key}") if source[key] is not None else None
+    if tournament.get("starts_at") is not None:
+        if tournament["ends_at"] <= tournament["starts_at"]:
+            raise ImportError("Tournament end must be after its start.")
+        zone = ZoneInfo(tournament["timezone"])
+        if any(tournament[key].astimezone(zone).date() != tournament["date"] for key in ("starts_at", "ends_at")):
+            raise ImportError("Tournament start/end must fall on its local calendar date.")
     for key in ("winning_length_inches", "top_10_percent_length_inches"):
         tournament[key] = decimal_value(source.get(key), f"tournament.{key}", 12, optional=True)
 
