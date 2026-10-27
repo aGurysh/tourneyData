@@ -6,7 +6,7 @@ import pytest
 from sqlalchemy import delete, insert, inspect, select
 from sqlalchemy.exc import IntegrityError
 
-from backend.db.models import Catch, Location, Species, Tournament, TournamentLocation
+from backend.db.models import Angler, TournamentEntry, Catch, Location, Species, Tournament, TournamentLocation
 
 
 def add_tournament(connection, suffix="1", **values):
@@ -19,8 +19,15 @@ def add_tournament(connection, suffix="1", **values):
 
 
 def add_catch(connection, tournament_id, **values):
+    from sqlalchemy.dialects.postgresql import insert as pg_insert
+    angler_id = connection.scalar(select(Angler.id).where(Angler.external_id == "test-angler"))
+    if angler_id is None:
+        angler_id = connection.scalar(insert(Angler).values(external_id="test-angler", name="Test Angler",
+            name_observed_at=datetime.now(timezone.utc)).returning(Angler.id))
+    connection.execute(pg_insert(TournamentEntry).values(tournament_id=tournament_id, angler_id=angler_id,
+        angler_name="Test Angler").on_conflict_do_nothing())
     fields = dict(
-        tournament_id=tournament_id, angler_name="Test Angler",
+        tournament_id=tournament_id, angler_id=angler_id, angler_name="Test Angler",
         catch_time=datetime(2026, 10, 26, 8, 30, tzinfo=timezone(timedelta(hours=-4))),
         length_inches=Decimal("19.25"),
     )
@@ -38,7 +45,7 @@ def test_migration_round_trip_and_model_agreement(migrated_database):
     command.check(config)
     assert set(inspect(connection).get_table_names()) == {
         "alembic_version", "tournaments", "locations", "species",
-        "tournament_locations", "catches",
+        "tournament_locations", "catches", "anglers", "tournament_entries",
     }
     connection.commit()
 

@@ -3,7 +3,7 @@
 from sqlalchemy import Connection, delete, func, insert, or_, select, text, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
-from backend.db.models import Catch, Location, Species, Tournament, TournamentLocation
+from backend.db.models import Angler, TournamentEntry, Catch, Location, Species, Tournament, TournamentLocation
 from backend.ingestion.validation import Export, ImportError
 
 
@@ -78,6 +78,7 @@ def import_export(connection: Connection, export: Export, *, apply=False, replac
         "top_10_percent_length_inches": str(source["top_10_percent_length_inches"]) if source["top_10_percent_length_inches"] is not None else None,
         "tournament_id": existing["id"] if existing else None,
         "scraped_at": export.scraped_at.isoformat(),
+        "anglers_in_file": len(export.anglers),
         "catches_in_file": len(export.catches), "existing_catches": old_count,
         "locations": [{"name": loc["name"], "state": loc["state"], "boundary_notes": loc["boundary_notes"], "id": loc_id, "action": "reuse" if loc_id else "create"} for loc, loc_id in resolved_locations],
         "species": sorted({row["species"] for row in export.catches if row["species"]}),
@@ -93,6 +94,7 @@ def import_export(connection: Connection, export: Export, *, apply=False, replac
             values["external_id"] = existing["external_id"]
         connection.execute(update(Tournament).where(Tournament.id == tournament_id).values(**values))
         connection.execute(delete(Catch).where(Catch.tournament_id == tournament_id))
+        connection.execute(delete(TournamentEntry).where(TournamentEntry.tournament_id == tournament_id))
         connection.execute(delete(TournamentLocation).where(TournamentLocation.tournament_id == tournament_id))
     else:
         tournament_id = connection.scalar(insert(Tournament).values(**values).returning(Tournament.id))
@@ -104,13 +106,32 @@ def import_export(connection: Connection, export: Export, *, apply=False, replac
     for name in plan["species"]:
         connection.execute(pg_insert(Species).values(name=name).on_conflict_do_nothing(index_elements=[Species.name]))
         species_ids[name] = connection.scalar(select(Species.id).where(Species.name == name))
+    angler_ids = import_entries(connection, export, tournament_id)
     if export.catches:
         connection.execute(insert(Catch), [
-            {key: value for key, value in row.items() if key != "species"}
-            | {"tournament_id": tournament_id, "species_id": species_ids.get(row["species"])}
+            {key: value for key, value in row.items() if key not in {"species", "source_angler_id"}}
+            | {"tournament_id": tournament_id, "species_id": species_ids.get(row["species"]),
+               "angler_id": angler_ids[row["source_angler_id"]]}
             for row in export.catches
         ])
     plan.update(applied=True, tournament_id=tournament_id)
     return plan
 
 
+
+def import_entries(connection, export, tournament_id):
+    """Caller holds the import lock and transaction; source IDs own identity."""
+    angler_ids = {}
+    for angler in export.anglers:
+        stmt = pg_insert(Angler).values(**angler, name_observed_at=export.scraped_at)
+        connection.execute(stmt.on_conflict_do_update(
+            index_elements=[Angler.external_id],
+            set_={"name": stmt.excluded.name, "name_observed_at": stmt.excluded.name_observed_at},
+            where=Angler.name_observed_at < stmt.excluded.name_observed_at))
+        angler_id = connection.scalar(select(Angler.id).where(Angler.external_id == angler["external_id"]))
+        angler_ids[angler["external_id"]] = angler_id
+        entry = pg_insert(TournamentEntry).values(tournament_id=tournament_id, angler_id=angler_id, angler_name=angler["name"])
+        connection.execute(entry.on_conflict_do_update(
+            index_elements=[TournamentEntry.tournament_id, TournamentEntry.angler_id],
+            set_={"angler_name": entry.excluded.angler_name}))
+    return angler_ids

@@ -21,6 +21,7 @@ class Export:
     catches: list[dict]
     scraped_at: datetime
     warnings: list[str]
+    anglers: list[dict]
 
 
 def object_value(value, label):
@@ -69,6 +70,33 @@ def load_export(path: Path) -> Export:
         data = json.loads(path.read_text(), parse_float=Decimal)
     except (OSError, ValueError) as exc:
         raise ImportError(f"Cannot read JSON export {path}: {exc}") from None
+    if isinstance(data, dict) and data.get("schema_version") == 1 and "anglers" not in data:
+        # Old exports need stable identities from their original raw response.
+        raw_path = path.with_suffix(".raw.json")
+        try:
+            from backend.ingestion.source import _build_export
+            raw = json.loads(raw_path.read_text())
+            if raw["source_url"] != data["tournament"]["source_url"]:
+                raise ValueError("Snapshot belongs to another tournament")
+            rebuilt = _build_export(raw, {"timezone": data["tournament"]["timezone"]})
+            if rebuilt["summary"]["blocking_issues"]:
+                raise ValueError("Raw snapshot contains blocking issues")
+            by_id = {c["external_id"]: c for c in rebuilt["catches"] if c["external_id"]}
+            for catch in data["catches"]:
+                source = by_id[catch["external_id"]]
+                if (catch["angler_name"] != source["angler_name"]
+                        or timestamp(catch["catch_time"], "catch_time") != timestamp(source["catch_time"], "catch_time")
+                        or Decimal(catch["length_inches"]) != Decimal(source["length_inches"])):
+                    raise ValueError("Catch differs from raw snapshot")
+                catch["source_angler_id"] = source["source_angler_id"]
+            data["anglers"] = rebuilt["anglers"]
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            raise ImportError(f"Legacy export needs a matching valid .raw.json with angler IDs; rebuild from raw data: {exc}") from None
+    return validate_export(data)
+
+
+def validate_export(data: dict) -> Export:
+    """Validate an in-memory transformation; no cleaned file is required."""
     object_value(data, "Export")
     if type(data.get("schema_version")) is not int or data["schema_version"] != 1:
         raise ImportError("Expected a schema_version 1 cleaned export, not raw JSON or a legacy catch cache.")
@@ -151,10 +179,29 @@ def load_export(path: Path) -> Export:
             raise ImportError("location.id must be a positive database ID when supplied.")
         normalized_locations.append(row)
 
+    anglers = data.get("anglers")
+    if not isinstance(anglers, list):
+        raise ImportError("Angler IDs are required; rebuild from a saved raw snapshot.")
+    normalized_anglers, angler_ids = [], set()
+    for item in anglers:
+        object_value(item, "angler")
+        row = {key: string(item.get(key), f"angler.{key}") for key in ("external_id", "name")}
+        if row["external_id"] in angler_ids:
+            raise ImportError("Duplicate source angler ID.")
+        angler_ids.add(row["external_id"])
+        normalized_anglers.append(row)
+    if len(anglers) != summary["source_anglers"]:
+        raise ImportError("Angler count differs from complete standings.")
+    names_by_id = {row["external_id"]: row["name"] for row in normalized_anglers}
     normalized_catches, ids = [], set()
     for index, catch in enumerate(catches):
         object_value(catch, f"catches[{index}]")
         row = {key: string(catch.get(key), f"catches[{index}].{key}", optional=key != "angler_name") for key in ("angler_name", "external_id", "species")}
+        row["source_angler_id"] = string(catch.get("source_angler_id"), f"catches[{index}].source_angler_id")
+        if row["source_angler_id"] not in angler_ids:
+            raise ImportError("Catch references an unknown angler.")
+        if row["angler_name"] != names_by_id[row["source_angler_id"]]:
+            raise ImportError("Catch name differs from its source angler entry.")
         if row["external_id"] is not None:
             if row["external_id"] in ids:
                 raise ImportError(f"Duplicate source catch ID: {row['external_id']}")
@@ -177,6 +224,6 @@ def load_export(path: Path) -> Export:
     if unknown_species:
         warnings.append(f"{unknown_species} catches have unknown species; stored as NULL.")
     return Export(tournament, normalized_locations, normalized_catches,
-                  timestamp(data.get("scraped_at"), "scraped_at"), list(dict.fromkeys(warnings)))
+                  timestamp(data.get("scraped_at"), "scraped_at"), list(dict.fromkeys(warnings)), normalized_anglers)
 
 

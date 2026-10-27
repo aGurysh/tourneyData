@@ -1,8 +1,7 @@
-# Proposed database schema
+# Database schema
 
-This schema supports an initial database populated from TourneyX standings.
-The scraper is an import aid, not a production service. Data can be reviewed
-and locations assigned manually before import.
+This schema supports TourneyX standings ingestion. See [INGESTION.md](INGESTION.md)
+for batch imports, raw snapshot replay, and the existing-data backfill.
 
 ## Tables
 
@@ -75,13 +74,27 @@ A tournament can temporarily have no location assignments while awaiting review.
 
 Normalize source labels of `Bass` to `Largemouth Bass` during import.
 
+### anglers
+
+- `id`: generated bigint primary key.
+- `external_id`: required unique TourneyX user ID; names never determine identity.
+- `name`: latest captured display name.
+- `name_observed_at`: required UTC capture timestamp; older snapshots cannot replace a newer name.
+
+### tournament_entries
+
+- `(tournament_id, angler_id)`: composite primary key, referencing tournaments and anglers.
+- `angler_name`: required name captured for this event.
+- Includes zero-fish standings participants. Indexed by `angler_id`.
+
 ### catches
 
 | Column          | Suggested type           | Constraints / purpose                                                 |
 | --------------- | ------------------------ | --------------------------------------------------------------------- |
 | `id`            | bigint                   | Primary key, generated internally.                                    |
 | `tournament_id` | bigint                   | Required foreign key to `tournaments.id`.                             |
-| `angler_name`   | text                     | Required angler display name stored directly on the catch.            |
+| `angler_id` | bigint | Required angler identity; `(tournament_id, angler_id)` references `tournament_entries`. |
+| `angler_name` | text | Historical display name captured for this catch. |
 | `catch_time`    | timestamp with time zone | Required full catch date and time, normalized to UTC on import.       |
 | `species_id`    | bigint                   | Nullable foreign key to `species.id`; older records may lack species. |
 | `length_inches` | numeric(6,2)             | Required positive decimal length in inches.                           |
@@ -97,6 +110,9 @@ blindly appending it on every import.
 
 ```mermaid
 erDiagram
+    anglers ||--o{ tournament_entries : enters
+    tournaments ||--o{ tournament_entries : includes
+    tournament_entries ||--o{ catches : submits
     tournaments ||--o{ catches : contains
     species o|--o{ catches : identifies
     tournaments ||--o{ tournament_locations : has
@@ -132,6 +148,8 @@ Additionally, add:
 
 - `catches (tournament_id, catch_time)` for tournament catch timelines.
 - `catches (species_id)` for species filtering.
+- `catches (angler_id)` for angler filtering.
+- `tournament_entries (angler_id)` for finding an angler's tournaments.
 - `tournament_locations (location_id, tournament_id)` for finding tournaments
   associated with a waterbody.
 

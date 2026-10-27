@@ -18,13 +18,13 @@ export default function TournamentEstimatedStandings({ tournamentId }: { tournam
   const titleId = useId()
   const detail = useQuery(tournamentQueries.detail(tournamentId))
   const catches = useQuery(tournamentQueries.catches(tournamentId))
-  const [selectedNames, setSelectedNames] = useState<string[] | null>(null)
+  const [selectedIds, setSelectedIds] = useState<number[] | null>(null)
   const { anglers, start, end, excludedCount } = useMemo(() => buildEstimatedStandings(catches.data ?? []), [catches.data])
-  const selected = selectedNames === null ? anglers.slice(0, 1) : selectedNames.flatMap((name) => {
-    const angler = anglers.find((item) => item.name === name)
+  const selected = selectedIds === null ? anglers.slice(0, 1) : selectedIds.flatMap((id) => {
+    const angler = anglers.find((item) => item.id === id)
     return angler ? [angler] : []
   })
-  const names = useMemo(() => anglers.map((angler) => angler.name).sort((a, b) => a.localeCompare(b)), [anglers])
+  const options = useMemo(() => [...anglers].sort((a, b) => a.name.localeCompare(b.name) || a.id - b.id), [anglers])
   const ready = !!detail.data && catches.data !== undefined
   const failed = detail.isError || catches.isError
   const fetching = detail.isFetching || catches.isFetching
@@ -50,13 +50,13 @@ export default function TournamentEstimatedStandings({ tournamentId }: { tournam
             ) : !ready || fetching ? <p role="status" className="text-sm text-muted-foreground">{ready ? "Refreshing estimated standings…" : "Loading estimated standings…"}</p> : null}
             {ready && (anglers.length > 0 ? (
               <>
-                <AnglerCombobox names={names} value={selected.map((angler) => angler.name)} onValueChange={setSelectedNames} />
+                <AnglerCombobox anglers={options} value={selected.map((angler) => angler.id)} onValueChange={setSelectedIds} />
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm" aria-live="polite">
                   {selected.map((angler) => {
                     const place = 1 + anglers.filter((item) => item.total > angler.total).length
                     const tied = anglers.filter((item) => item.total === angler.total).length > 1
                     return (
-                      <span key={angler.name} className="inline-flex items-center gap-2">
+                      <span key={angler.id} className="inline-flex items-center gap-2">
                         <span aria-hidden="true" className={`h-0.5 w-5 bg-current ${standingColor(anglers.indexOf(angler))}`} />
                         {angler.name} · {angler.total.toFixed(2)}″ · {tied ? "Tied " : ""}{formatPlace(place)}
                       </span>
@@ -64,7 +64,7 @@ export default function TournamentEstimatedStandings({ tournamentId }: { tournam
                   })}
                   <span className="text-xs text-muted-foreground">{selected.length === 0 ? "Select anglers to highlight their standings. · " : "Final scoring totals · "}{anglers.length} anglers with catches</span>
                 </div>
-                <EstimatedStandingsChart key={JSON.stringify(selected.map((angler) => angler.name))} anglers={anglers} selected={selected} start={start} end={end} timeZone={detail.data!.timezone} />
+                <EstimatedStandingsChart key={JSON.stringify(selected.map((angler) => angler.id))} anglers={anglers} selected={selected} start={start} end={end} timeZone={detail.data!.timezone} />
                 <p className="text-xs text-muted-foreground">Estimated from final scoring catches and photo times. Earlier culled catches are unavailable, so historical totals may be understated.{hasTies ? " Official tie-break results are unavailable; equal totals share a final place." : ""}</p>
               </>
             ) : <p className="text-muted-foreground">No catches with usable times and lengths to display.</p>)}

@@ -25,6 +25,7 @@ export interface TournamentDetail extends Tournament {
 }
 
 export interface TournamentCatch {
+  angler_id: number
   id: number
   tournament_id: number
   angler_name: string

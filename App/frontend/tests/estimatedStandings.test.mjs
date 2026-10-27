@@ -2,7 +2,11 @@ import assert from "node:assert/strict"
 import { test } from "node:test"
 import { buildEstimatedStandings } from "../src/lib/estimatedStandings.ts"
 
-const sample = (angler_name, catch_time, length_inches) => ({ angler_name, catch_time, length_inches })
+const ids = new Map()
+const sample = (angler_name, catch_time, length_inches) => {
+  if (!ids.has(angler_name)) ids.set(angler_name, ids.size + 1)
+  return { angler_id: ids.get(angler_name), angler_name, catch_time, length_inches }
+}
 
 test("sorts catches chronologically, accumulates final scoring lengths, and defaults to the highest total", () => {
   const result = buildEstimatedStandings([
@@ -61,4 +65,13 @@ test("rejects invalid times, ambiguous local times, missing anglers, and nonposi
   ])
   assert.deepEqual(result, { anglers: [], start: 0, end: 0, excludedCount: 8 })
   assert.deepEqual(buildEstimatedStandings([]), { anglers: [], start: 0, end: 0, excludedCount: 0 })
+})
+
+
+test("keeps two anglers with the same name separate using their database IDs", () => {
+  const catches = [1, 2].map((angler_id) => ({ ...sample("Alex", "2026-07-01T11:00:00Z", "20"), angler_id }))
+  const { anglers } = buildEstimatedStandings(catches)
+  assert.equal(anglers.length, 2)
+  assert.deepEqual(anglers.map(({ id, total }) => ({ id, total })), [{ id: 1, total: 20 }, { id: 2, total: 20 }])
+  assert.ok(anglers.every((angler) => angler.points[0].tied))
 })
