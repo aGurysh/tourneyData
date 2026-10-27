@@ -20,10 +20,10 @@ export default function App() {
         <Tabs defaultValue="single" className="gap-8">
           <TabsList aria-label="Analytics views" className="w-full group-data-horizontal/tabs:h-auto sm:w-fit">
             <TabsTrigger value="single" className="whitespace-normal px-4 py-2">
-              Single tournament summary
+              Single Tournament Summary
             </TabsTrigger>
             <TabsTrigger value="aggregated" className="whitespace-normal px-4 py-2">
-              Aggregated results
+              Aggregated Results
             </TabsTrigger>
           </TabsList>
 
