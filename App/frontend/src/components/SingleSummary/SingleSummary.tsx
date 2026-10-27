@@ -91,7 +91,7 @@ export default function SingleSummary() {
           </p>
         )}
       </div>
-      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2 lg:items-stretch">
         <TournamentSummaryCard
           key={availableTournamentId}
           tournamentId={availableTournamentId ? Number(availableTournamentId) : null}

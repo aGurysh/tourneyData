@@ -21,7 +21,7 @@ export default function SpeciesCatchRatio({ counts }: { counts: TournamentDetail
   const describe = (segment: typeof segments[number]) => `${segment.name}: ${segment.count.toLocaleString()} (${segment.percent.toFixed(1)}%) · Average length: ${segment.averageLength} inches`
 
   return (
-    <div className="mt-3 space-y-2">
+    <div className="mt-3 space-y-4">
       <div
         role="img"
         aria-label={`Submitted catch ratio. ${segments.map(describe).join("; ")}`}
