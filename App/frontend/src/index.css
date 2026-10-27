@@ -1,0 +1,34 @@
+@import "tailwindcss";
+@import "shadcn/tailwind.css";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--border);
+  --color-ring: var(--ring);
+}
+
+:root {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  --background: oklch(0.985 0.002 180);
+  --foreground: oklch(0.22 0.02 180);
+  --card: oklch(1 0 0);
+  --muted: oklch(0.95 0.005 180);
+  --muted-foreground: oklch(0.46 0.015 180);
+  --border: oklch(0.9 0.008 180);
+  --ring: oklch(0.5 0.08 180);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply m-0 bg-background text-foreground;
+  }
+}
