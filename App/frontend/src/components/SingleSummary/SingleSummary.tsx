@@ -7,6 +7,7 @@ import { usePersistentState } from "@/hooks/usePersistentState"
 import TournamentSummaryCard from "./TournamentSummaryCard"
 import TournamentBiteWindows from "./TournamentBiteWindows"
 import TournamentWeatherCard from "./TournamentWeatherCard"
+import TournamentEstimatedStandings from "./TournamentEstimatedStandings"
 
 function isTournamentId(value: string): value is string {
   return value === "" || (/^[1-9]\d*$/.test(value) && Number.isSafeInteger(Number(value)))
@@ -99,6 +100,10 @@ export default function SingleSummary() {
         />
         <TournamentBiteWindows
           key={`bite-windows-${availableTournamentId}`}
+          tournamentId={availableTournamentId ? Number(availableTournamentId) : null}
+        />
+        <TournamentEstimatedStandings
+          key={`estimated-standings-${availableTournamentId}`}
           tournamentId={availableTournamentId ? Number(availableTournamentId) : null}
         />
         <TournamentWeatherCard
