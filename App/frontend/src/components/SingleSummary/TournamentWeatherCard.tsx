@@ -5,13 +5,12 @@ import { Cloud, Gauge, Thermometer, Wind } from "lucide-react"
 import { ApiError } from "@/api/client"
 import { tournamentQueries } from "@/api/queries"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatWeatherValue, pressureInHg, weatherRange, windDirection } from "@/lib/weather"
 
 function weatherError(error: Error | null) {
   if (error instanceof ApiError) {
-    if (error.status === 409) return "Weather needs a tournament location and start/end times."
+    if (error.status === 409) return "Historical weather is not available for this tournament yet."
     if (error.status === 503) return "Historical weather is not available for this tournament yet."
     if (error.status === 404) return "This tournament is no longer available."
   }
@@ -54,9 +53,9 @@ export default function TournamentWeatherCard({ tournamentId }: { tournamentId: 
         ) : query.isError ? (
           <p role="alert" className="text-sm text-muted-foreground">
             {weather ? "Couldn't refresh weather. Showing saved data." : weatherError(query.error)}{" "}
-            <Button variant="link" className="h-auto p-0" disabled={query.isFetching} onClick={() => void query.refetch()}>
+            {/* <Button variant="link" className="h-auto p-0" disabled={query.isFetching} onClick={() => void query.refetch()}>
               Try again
-            </Button>
+            </Button> */}
           </p>
         ) : query.isFetching ? (
           <p role="status" className="text-sm text-muted-foreground">
