@@ -1,20 +1,25 @@
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { tournamentQueries } from "@/api/queries"
 import BiteWindowsCard from "@/components/charts/BiteWindowsCard"
 import { Button } from "@/components/ui/button"
-import { buildBiteWindows } from "@/lib/biteWindows"
+import { buildBiteWindows, matchesBiteWindowFilters } from "@/lib/biteWindows"
+import type { BiteWindowFilters } from "@/lib/biteWindows"
 
 export default function TournamentBiteWindows({ tournamentId }: { tournamentId: number | null }) {
+  const [filters, setFilters] = useState<BiteWindowFilters>({ species: "both", minimumLength: 0 })
   const detailQuery = useQuery(tournamentQueries.detail(tournamentId))
   const catchesQuery = useQuery(tournamentQueries.catches(tournamentId))
   const timeZone = detailQuery.data?.timezone
   const { windows, excludedCount } = useMemo(() => buildBiteWindows(
-    timeZone ? (catchesQuery.data ?? []).map((item) => ({
+    timeZone ? (catchesQuery.data ?? []).filter((item) => matchesBiteWindowFilters({
+      species: item.species_name,
+      length: Number(item.length_inches),
+    }, filters)).map((item) => ({
       catchTime: item.catch_time,
       timeZone,
     })) : [],
-  ), [catchesQuery.data, timeZone])
+  ), [catchesQuery.data, timeZone, filters])
   const failed = detailQuery.isError || catchesQuery.isError
   const fetching = detailQuery.isFetching || catchesQuery.isFetching
   const ready = !!timeZone && catchesQuery.data !== undefined
@@ -23,10 +28,12 @@ export default function TournamentBiteWindows({ tournamentId }: { tournamentId: 
   return (
     <BiteWindowsCard
       windows={windows}
+      filters={filters}
+      onFiltersChange={setFilters}
       timeLabel={timeZone ?? "tournament local time"}
       emptyMessage={tournamentId === null
         ? "Select a tournament to view bite windows."
-        : loading || (failed && !ready) ? "" : "No catches with usable times to display."}
+        : loading || (failed && !ready) ? "" : "No catches match these filters with usable times. Try Both species or a lower minimum length."}
       status={tournamentId !== null && (
         <>
           {failed ? (

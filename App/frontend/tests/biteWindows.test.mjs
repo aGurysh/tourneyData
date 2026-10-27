@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
-import { buildBiteWindows, describeBiteWindow, formatWindowTime } from "../src/lib/biteWindows.ts"
+import { buildBiteWindows, describeBiteWindow, formatWindowTime, matchesBiteWindowFilters } from "../src/lib/biteWindows.ts"
 
 const sample = (catchTime, timeZone = "America/New_York") => ({ catchTime, timeZone })
 
@@ -75,4 +75,26 @@ test("accepts an empty or caller-filtered dataset without tournament metadata", 
   ]
   assert.deepEqual(buildBiteWindows(records.filter((item) => item.species === "Smallmouth Bass" && item.length >= 12)).windows,
     [{ startMinute: 660, count: 1 }])
+})
+
+test("filters species and includes catches exactly at the minimum length before binning", () => {
+  const records = [
+    { ...sample("2026-07-01T11:00:00Z"), species: "Smallmouth Bass", length: 15.25 },
+    { ...sample("2026-07-01T11:10:00Z"), species: "Largemouth Bass", length: 16 },
+    { ...sample("2026-07-01T11:20:00Z"), species: "Smallmouth Bass", length: 15 },
+    { ...sample("2026-07-01T12:00:00Z"), species: "Smallmouth Bass", length: 18 },
+    { ...sample("2026-07-01T12:10:00Z"), species: null, length: 20 },
+    { ...sample("2026-07-01T12:20:00Z"), species: "Spotted Bass", length: 20 },
+    { ...sample("2026-07-01T12:30:00Z"), species: "Largemouth Bass", length: NaN },
+  ]
+  const filtered = (species, minimumLength) => records.filter((item) => matchesBiteWindowFilters(item, { species, minimumLength }))
+  assert.equal(filtered("both", 0).length, 4)
+  assert.equal(filtered("both", 15.25).length, 3)
+  assert.equal(filtered("Largemouth Bass", 15.25).length, 1)
+  assert.deepEqual(buildBiteWindows(filtered("Smallmouth Bass", 15.25)).windows, [
+    { startMinute: 420, count: 1 },
+    { startMinute: 450, count: 0 },
+    { startMinute: 480, count: 1 },
+  ])
+  assert.deepEqual(buildBiteWindows(filtered("both", 25)).windows, [])
 })
