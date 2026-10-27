@@ -5,6 +5,7 @@ import { tournamentQueries, tournamentQueryKey } from "@/api/queries"
 import { Button } from "@/components/ui/button"
 import { usePersistentState } from "@/hooks/usePersistentState"
 import TournamentSummaryCard from "./TournamentSummaryCard"
+import TournamentBiteWindows from "./TournamentBiteWindows"
 
 function isTournamentId(value: string): value is string {
   return value === "" || (/^[1-9]\d*$/.test(value) && Number.isSafeInteger(Number(value)))
@@ -93,6 +94,10 @@ export default function SingleSummary() {
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
         <TournamentSummaryCard
           key={availableTournamentId}
+          tournamentId={availableTournamentId ? Number(availableTournamentId) : null}
+        />
+        <TournamentBiteWindows
+          key={`bite-windows-${availableTournamentId}`}
           tournamentId={availableTournamentId ? Number(availableTournamentId) : null}
         />
       </div>
