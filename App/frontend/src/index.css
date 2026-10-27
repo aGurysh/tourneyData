@@ -7,6 +7,12 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
+  --color-card-foreground: var(--foreground);
+  --color-primary: var(--foreground);
+  --color-primary-foreground: var(--background);
+  --color-secondary: var(--muted);
+  --color-secondary-foreground: var(--foreground);
+  --color-destructive: var(--destructive);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
@@ -24,6 +30,7 @@
   --muted-foreground: oklch(0.46 0.015 180);
   --border: oklch(0.9 0.008 180);
   --ring: oklch(0.5 0.08 180);
+  --destructive: oklch(0.577 0.245 27.325);
 }
 
 .dark {
@@ -35,6 +42,7 @@
   --muted-foreground: oklch(0.73 0.015 180);
   --border: oklch(0.33 0.018 180);
   --ring: oklch(0.72 0.09 180);
+  --destructive: oklch(0.704 0.191 22.216);
 }
 
 @layer base {
