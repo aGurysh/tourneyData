@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Button } from "@/components/ui/button"
 
 export default function ThemeToggle() {
   const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"))
@@ -15,13 +16,14 @@ export default function ThemeToggle() {
   }
 
   return (
-    <button
+    <Button
+      variant="outline"
+      size="lg"
       type="button"
       onClick={toggleTheme}
       aria-label="Dark mode"
       aria-pressed={dark}
       title={`Switch to ${dark ? "light" : "dark"} mode`}
-      className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border bg-background px-3 py-2 text-sm font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
     >
       <svg aria-hidden="true" className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
         {dark ? (
@@ -34,6 +36,6 @@ export default function ThemeToggle() {
         )}
       </svg>
       {dark ? "Light mode" : "Dark mode"}
-    </button>
+    </Button>
   )
 }

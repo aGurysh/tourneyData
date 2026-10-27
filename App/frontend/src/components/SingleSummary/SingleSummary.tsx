@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 
 import { listTournaments } from "@/api/tournaments"
 import type { Tournament } from "@/api/tournaments"
+import { Button } from "@/components/ui/button"
 import TournamentSummaryCard from "./TournamentSummaryCard"
 
 export default function SingleSummary() {
@@ -65,9 +66,9 @@ export default function SingleSummary() {
         {error ? (
           <p id="tournament-error" role="alert" className="text-sm text-muted-foreground">
             Unable to load tournaments.{" "}
-            <button type="button" onClick={() => setAttempt((value) => value + 1)} className="underline underline-offset-4">
+            <Button variant="link" onClick={() => setAttempt((value) => value + 1)} className="h-auto p-0">
               Try again
-            </button>
+            </Button>
           </p>
         ) : (
           <p id="tournament-status" role="status" className="text-sm text-muted-foreground">

@@ -4,7 +4,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/layout/Tabs"
-import SingleSummary from "@/components/SingleSumamry/SingleSummary"
+import SingleSummary from "@/components/SingleSummary/SingleSummary"
 import ThemeToggle from "@/components/layout/ThemeToggle"
 
 export default function App() {
