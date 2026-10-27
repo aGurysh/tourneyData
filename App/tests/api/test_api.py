@@ -8,15 +8,15 @@ from sqlalchemy import insert, select
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
-from tourney_app.db import get_session
-from tourney_app.main import create_app
-from tourney_app.models import Base, Catch, Location, Species, Tournament, TournamentLocation
+from backend.api.dependencies import get_session
+from backend.main import create_app
+from backend.db.models import Base, Catch, Location, Species, Tournament, TournamentLocation
 
 
 @pytest.fixture
 def api_client(connection, monkeypatch):
     # All requests use the test connection/schema, never the app's normal database.
-    monkeypatch.setattr("tourney_app.main.create_db_engine", lambda: connection.engine)
+    monkeypatch.setattr("backend.main.create_db_engine", lambda: connection.engine)
     monkeypatch.setenv("CORS_ORIGINS", "http://localhost:5173")
     app = create_app()
 
@@ -201,7 +201,7 @@ def test_requests_leave_all_tables_unchanged(api_client, connection, sample_data
 
 def test_app_lifecycle_disposes_engine_and_cors_is_configurable(monkeypatch):
     engine = Mock()
-    monkeypatch.setattr("tourney_app.main.create_db_engine", lambda: engine)
+    monkeypatch.setattr("backend.main.create_db_engine", lambda: engine)
     monkeypatch.setenv("CORS_ORIGINS", "http://localhost:3000, https://frontend.test")
     with TestClient(create_app()) as client:
         assert not engine.dispose.called

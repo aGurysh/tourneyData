@@ -9,7 +9,7 @@ from alembic.config import Config
 import pytest
 from sqlalchemy import text
 
-from tourney_app.db import create_db_engine
+from backend.db.session import create_db_engine
 
 
 @pytest.fixture(scope="session")

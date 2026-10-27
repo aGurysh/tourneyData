@@ -6,7 +6,7 @@ import pytest
 from sqlalchemy import delete, insert, inspect, select
 from sqlalchemy.exc import IntegrityError
 
-from tourney_app.models import Catch, Location, Species, Tournament, TournamentLocation
+from backend.db.models import Catch, Location, Species, Tournament, TournamentLocation
 
 
 def add_tournament(connection, suffix="1", **values):

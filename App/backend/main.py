@@ -1,18 +1,18 @@
-"""Run from App: uvicorn tourney_app.main:app --reload."""
+"""Run from App: uvicorn backend.main:app --reload."""
 
 from contextlib import asynccontextmanager
 import logging
 import os
 
-from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
 
-from tourney_app.db import APP_ROOT, create_db_engine
-from tourney_app.routes import health, locations, tournaments
+from backend.config import load_settings
+from backend.db.session import create_db_engine
+from backend.api.routes import health, locations, tournaments
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
-    load_dotenv(APP_ROOT / ".env", override=False)
+    load_settings()
     app = FastAPI(
         title="Fishing Tournament Analytics API", version="0.1.0",
         description="Read-only access to imported tournament standings and catches.",

@@ -4,8 +4,8 @@ from logging.config import fileConfig
 
 from alembic import context
 
-from tourney_app.db import create_db_engine, database_url
-from tourney_app.models import Base
+from backend.db.session import create_db_engine, database_url
+from backend.db.models import Base
 
 config = context.config
 if config.config_file_name:

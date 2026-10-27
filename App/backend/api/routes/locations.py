@@ -1,10 +1,10 @@
 from fastapi import APIRouter
 from sqlalchemy import func, select
 
-from tourney_app.db import DatabaseSession
-from tourney_app.models import Location
-from tourney_app.routes.common import Limit, Offset
-from tourney_app.schemas import LocationResponse, Page
+from backend.api.dependencies import DatabaseSession
+from backend.db.models import Location
+from backend.api.routes.common import Limit, Offset
+from backend.api.schemas import LocationResponse, Page
 
 router = APIRouter(prefix="/locations", tags=["locations"])
 
