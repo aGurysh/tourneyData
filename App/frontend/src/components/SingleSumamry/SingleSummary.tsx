@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 
 import { listTournaments } from "@/api/tournaments"
 import type { Tournament } from "@/api/tournaments"
+import TournamentSummaryCard from "./TournamentSummaryCard"
 
 export default function SingleSummary() {
   const [tournaments, setTournaments] = useState<Tournament[]>([])
@@ -39,6 +40,9 @@ export default function SingleSummary() {
 
   return (
     <section aria-label="Single tournament summary" className="space-y-6">
+       <p className="mt-2 text-sm text-muted-foreground">
+          Analyze the results of a single tournament
+        </p>
       <div className="max-w-xl space-y-2">
         <label htmlFor="tournament" className="block text-sm font-medium">
           Tournament
@@ -71,14 +75,11 @@ export default function SingleSummary() {
           </p>
         )}
       </div>
-
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Single tournament summary
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Tournament standings and catch activity will appear here.
-        </p>
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+        <TournamentSummaryCard
+          key={selectedTournamentId}
+          tournamentId={selectedTournamentId ? Number(selectedTournamentId) : null}
+        />
       </div>
     </section>
   )

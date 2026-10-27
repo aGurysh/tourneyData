@@ -49,7 +49,13 @@ def get_tournament(tournament_id: TournamentId, session: DatabaseSession):
         .where(TournamentLocation.tournament_id == tournament_id)
         .order_by(Location.name, Location.id)
     ).mappings().all()
-    return dict(row) | {"locations": locations}
+    species_caught = session.scalars(
+        select(Species.name)
+        .join(Catch, Catch.species_id == Species.id)
+        .where(Catch.tournament_id == tournament_id)
+        .distinct().order_by(Species.name)
+    ).all()
+    return dict(row) | {"locations": locations, "species_caught": species_caught}
 
 
 @router.get("/{tournament_id}/catches", response_model=Page[CatchResponse])

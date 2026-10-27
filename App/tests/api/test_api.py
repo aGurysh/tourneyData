@@ -102,7 +102,21 @@ def test_details_include_waterbody_boundaries(api_client, sample_data):
     assert row["catch_count"] == 3
     assert [loc["name"] for loc in row["locations"]] == ["Bay", "River"]
     assert all(loc["boundary_notes"] == "Eligible section" for loc in row["locations"])
+    assert row["species_caught"] == ["Smallmouth Bass"]
     assert api_client.get(f"/tournaments/{sample_data['older']}").json()["locations"] == []
+    assert api_client.get(f"/tournaments/{sample_data['older']}").json()["species_caught"] == []
+
+
+def test_details_include_both_species_from_catches(api_client, connection, sample_data):
+    largemouth = connection.scalar(insert(Species).values(name="Largemouth Bass").returning(Species.id))
+    connection.execute(insert(Catch).values(
+        tournament_id=sample_data["newer"], angler_name="Another Angler",
+        species_id=largemouth, length_inches=Decimal("17.50"),
+        catch_time=datetime(2026, 7, 18, 13, 0, tzinfo=timezone.utc),
+    ))
+    response = api_client.get(f"/tournaments/{sample_data['newer']}")
+    assert response.status_code == 200
+    assert response.json()["species_caught"] == ["Largemouth Bass", "Smallmouth Bass"]
 
 
 def test_catches_serialization_nullable_species_and_order(api_client, sample_data):
