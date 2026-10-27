@@ -14,8 +14,8 @@ test("sorts catches chronologically, accumulates final scoring lengths, and defa
     { name: "Alex", total: 33.75 }, { name: "Blair", total: 20 },
   ])
   assert.deepEqual(result.anglers[0].points, [
-    { time: Date.parse("2026-07-01T11:00:00Z"), total: 15.5 },
-    { time: Date.parse("2026-07-01T13:00:00Z"), total: 33.75 },
+    { time: Date.parse("2026-07-01T11:00:00Z"), total: 15.5, lengths: [15.5], place: 1, tied: false },
+    { time: Date.parse("2026-07-01T13:00:00Z"), total: 33.75, lengths: [18.25], place: 1, tied: false },
   ])
   assert.equal(result.start, Date.parse("2026-07-01T10:50:00Z"))
   assert.equal(result.end, Date.parse("2026-07-01T13:10:00Z"))
@@ -30,7 +30,26 @@ test("combines simultaneous catches per angler and sorts tied leaders determinis
   assert.deepEqual(anglers.map(({ name, total }) => ({ name, total })), [
     { name: "Alex", total: 20.3 }, { name: "Blair", total: 20.3 },
   ])
-  assert.deepEqual(anglers[1].points, [{ time: Date.parse("2026-07-01T11:00:00Z"), total: 20.3 }])
+  assert.deepEqual(anglers[1].points, [{ time: Date.parse("2026-07-01T11:00:00Z"), total: 20.3, lengths: [10.1, 10.2], place: 1, tied: true }])
+})
+
+test("ranks each catch against every angler's total at that time with shared places for ties", () => {
+  const { anglers } = buildEstimatedStandings([
+    sample("Alex", "2026-07-01T11:00:00Z", "20"),
+    sample("Blair", "2026-07-01T11:00:00Z", "20"),
+    sample("Casey", "2026-07-01T12:00:00Z", "15"),
+    sample("Casey", "2026-07-01T13:00:00Z", "10"),
+    sample("Blair", "2026-07-01T14:00:00Z", "10"),
+    sample("Alex", "2026-07-01T15:00:00Z", "5"),
+  ])
+  const casey = anglers.find((angler) => angler.name === "Casey")
+  assert.deepEqual(casey.points.map(({ lengths, place, tied }) => ({ lengths, place, tied })), [
+    { lengths: [15], place: 3, tied: false },
+    { lengths: [10], place: 1, tied: false },
+  ])
+  assert.deepEqual(anglers.find((angler) => angler.name === "Alex").points.map(({ place, tied }) => ({ place, tied })), [
+    { place: 1, tied: true }, { place: 2, tied: true },
+  ])
 })
 
 test("rejects invalid times, ambiguous local times, missing anglers, and nonpositive lengths", () => {
