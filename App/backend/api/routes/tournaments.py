@@ -49,13 +49,22 @@ def get_tournament(tournament_id: TournamentId, session: DatabaseSession):
         .where(TournamentLocation.tournament_id == tournament_id)
         .order_by(Location.name, Location.id)
     ).mappings().all()
-    species_caught = session.scalars(
-        select(Species.name)
-        .join(Catch, Catch.species_id == Species.id)
+    species_counts = session.execute(
+        select(
+            Species.name.label("species_name"),
+            func.count(Catch.id).label("catch_count"),
+            func.avg(Catch.length_inches).label("average_length_inches"),
+        )
+        .select_from(Catch)
+        .outerjoin(Species, Catch.species_id == Species.id)
         .where(Catch.tournament_id == tournament_id)
-        .distinct().order_by(Species.name)
-    ).all()
-    return dict(row) | {"locations": locations, "species_caught": species_caught}
+        .group_by(Species.name).order_by(Species.name)
+    ).mappings().all()
+    return dict(row) | {
+        "locations": locations,
+        "species_caught": [item["species_name"] for item in species_counts if item["species_name"] is not None],
+        "species_catch_counts": species_counts,
+    }
 
 
 @router.get("/{tournament_id}/catches", response_model=Page[CatchResponse])
