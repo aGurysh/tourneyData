@@ -68,6 +68,47 @@ def test_validation_normalizes_values(export_data, read_export):
     assert export.catches[0]["catch_time"].isoformat() == "2026-07-18T12:30:00+00:00"
 
 
+def weather_fields():
+    return dict(starts_at="2026-07-18T09:45:00Z", ends_at="2026-07-18T18:30:00Z",
+                weather_latitude="41.09588", weather_longitude="-79.68106")
+
+
+@pytest.mark.parametrize("changes", [
+    {"weather_latitude": "NaN"}, {"weather_longitude": "181"},
+    {"weather_latitude": True}, {"weather_longitude": None},
+    {"starts_at": "2026-07-18T09:45:00"}, {"ends_at": "2026-07-18T08:00:00Z"},
+    {"ends_at": "2026-07-19T18:30:00Z"},
+])
+def test_invalid_weather_metadata(export_data, read_export, changes):
+    export_data["tournament"].update(weather_fields() | changes)
+    with pytest.raises(ImportError):
+        read_export(export_data)
+
+
+def test_metadata_patch_preserves_catches_and_links(connection, export_data, read_export):
+    original = import_export(connection, read_export(export_data), apply=True)
+    before = {model: connection.execute(select(model.__table__)).all()
+              for model in (Catch, Location, Species, TournamentLocation)}
+    export_data["tournament"].update(weather_fields(), name="Do not change this name")
+    export = read_export(export_data)
+    preview = import_export(connection, export, metadata_only=True)
+    assert preview["applied"] is False
+    assert connection.scalar(select(Tournament.starts_at)) is None
+    result = import_export(connection, export, metadata_only=True, apply=True)
+    assert result["tournament_id"] == original["tournament_id"]
+    row = connection.execute(select(Tournament.__table__)).one()
+    assert row.name == "Test event"
+    assert row.starts_at.isoformat() == "2026-07-18T09:45:00+00:00"
+    assert row.weather_latitude == 41.09588
+    for model, rows in before.items():
+        assert connection.execute(select(model.__table__)).all() == rows
+    # Legacy exports do not erase metadata during later snapshot replacement.
+    for key in weather_fields():
+        del export_data["tournament"][key]
+    import_export(connection, read_export(export_data), replace=True, apply=True)
+    assert connection.scalar(select(Tournament.weather_latitude)) == 41.09588
+
+
 def test_preview_writes_nothing(connection, export_data, read_export):
     plan = import_export(connection, read_export(export_data))
     assert plan["action"] == "create" and plan["applied"] is False

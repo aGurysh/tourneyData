@@ -43,6 +43,14 @@ has an ISO calendar date and an IANA timezone. The exporter checks raw photo
 times against their formatted equivalents. It does not use `date_submitted`
 as a catch timestamp.
 
+Tournament `starts_at` and `ends_at` come from metadata `start_date` and
+`end_date`, interpreted in the configured tournament timezone and exported
+as UTC timestamps. End must follow start. `weather_latitude` and
+`weather_longitude` are decimal strings parsed from metadata `lat_lng`.
+Missing or invalid coordinates become null with a warning, allowing the catch
+import to continue without weather. The source event point is not a verified
+fishing location. No additional config fields are required.
+
 Tournament fields `winning_length_inches` and `top_10_percent_length_inches`
 are decimal strings derived from the full captured standings, even when
 `--max-anglers` limits the catch export. Winning length is the first-place

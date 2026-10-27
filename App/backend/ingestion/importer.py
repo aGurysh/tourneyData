@@ -7,7 +7,7 @@ from backend.db.models import Catch, Location, Species, Tournament, TournamentLo
 from backend.ingestion.validation import Export, ImportError
 
 
-def import_export(connection: Connection, export: Export, *, apply=False, replace=False) -> dict:
+def import_export(connection: Connection, export: Export, *, apply=False, replace=False, metadata_only=False) -> dict:
     """Plan/import within the caller's transaction; never commit independently."""
     if apply:
         # Serialize imports, including lookup creation, without changing the schema.
@@ -26,8 +26,30 @@ def import_export(connection: Connection, export: Export, *, apply=False, replac
             and existing["external_id"] != source["external_id"]
         ):
             raise ImportError("Source URL/external ID conflicts with an existing tournament; review its identity.")
-        if not replace:
+        if not replace and not metadata_only:
             raise ImportError(f"Tournament {existing['id']} already exists. Use --replace to preview or apply a full snapshot replacement.")
+
+    if metadata_only:
+        if not existing:
+            raise ImportError("Metadata patch requires an existing tournament.")
+        if any(source[key] != existing[key] for key in ("date", "timezone")):
+            raise ImportError("Metadata patch date/timezone differs from the existing tournament; review before replacing.")
+        fields = ("starts_at", "ends_at", "weather_latitude", "weather_longitude")
+        if not all(key in source for key in fields):
+            raise ImportError("Metadata patch requires an export containing duration and weather coordinates.")
+        values = {key: source[key] for key in fields}
+        def printable(value):
+            return value.isoformat() if hasattr(value, "isoformat") else value
+        plan = {
+            "action": "update_metadata", "applied": apply,
+            "tournament_id": existing["id"], "tournament": source["name"],
+            "changes": {key: {"before": printable(existing[key]), "after": printable(value)}
+                        for key, value in values.items()},
+            "warnings": export.warnings,
+        }
+        if apply:
+            connection.execute(update(Tournament).where(Tournament.id == existing["id"]).values(**values))
+        return plan
 
     resolved_locations, keys = [], set()
     for location in export.locations:
