@@ -16,6 +16,11 @@ export interface TournamentDetail extends Tournament {
     boundary_notes: string | null
   }[]
   species_caught: string[]
+  species_catch_counts: {
+    species_name: string | null
+    catch_count: number
+    average_length_inches: string
+  }[]
 }
 
 export function getTournament(id: number, signal?: AbortSignal) {

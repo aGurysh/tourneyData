@@ -43,9 +43,16 @@ class TournamentResponse(BaseModel):
     catch_count: int
 
 
+class SpeciesCatchCount(BaseModel):
+    species_name: str | None
+    catch_count: int
+    average_length_inches: Decimal
+
+
 class TournamentDetail(TournamentResponse):
     locations: list[TournamentWaterbody]
     species_caught: list[str]
+    species_catch_counts: list[SpeciesCatchCount]
 
 
 class CatchResponse(BaseModel):

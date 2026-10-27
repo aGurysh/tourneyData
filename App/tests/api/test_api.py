@@ -103,8 +103,13 @@ def test_details_include_waterbody_boundaries(api_client, sample_data):
     assert [loc["name"] for loc in row["locations"]] == ["Bay", "River"]
     assert all(loc["boundary_notes"] == "Eligible section" for loc in row["locations"])
     assert row["species_caught"] == ["Smallmouth Bass"]
+    assert [dict(item, average_length_inches=Decimal(item["average_length_inches"])) for item in row["species_catch_counts"]] == [
+        {"species_name": "Smallmouth Bass", "catch_count": 2, "average_length_inches": Decimal("19.625")},
+        {"species_name": None, "catch_count": 1, "average_length_inches": Decimal("18.00")},
+    ]
     assert api_client.get(f"/tournaments/{sample_data['older']}").json()["locations"] == []
     assert api_client.get(f"/tournaments/{sample_data['older']}").json()["species_caught"] == []
+    assert api_client.get(f"/tournaments/{sample_data['older']}").json()["species_catch_counts"] == []
 
 
 def test_details_include_both_species_from_catches(api_client, connection, sample_data):
@@ -117,6 +122,13 @@ def test_details_include_both_species_from_catches(api_client, connection, sampl
     response = api_client.get(f"/tournaments/{sample_data['newer']}")
     assert response.status_code == 200
     assert response.json()["species_caught"] == ["Largemouth Bass", "Smallmouth Bass"]
+    counts = response.json()["species_catch_counts"]
+    assert [dict(item, average_length_inches=Decimal(item["average_length_inches"])) for item in counts] == [
+        {"species_name": "Largemouth Bass", "catch_count": 1, "average_length_inches": Decimal("17.50")},
+        {"species_name": "Smallmouth Bass", "catch_count": 2, "average_length_inches": Decimal("19.625")},
+        {"species_name": None, "catch_count": 1, "average_length_inches": Decimal("18.00")},
+    ]
+    assert sum(item["catch_count"] for item in response.json()["species_catch_counts"]) == response.json()["catch_count"]
 
 
 def test_catches_serialization_nullable_species_and_order(api_client, sample_data):

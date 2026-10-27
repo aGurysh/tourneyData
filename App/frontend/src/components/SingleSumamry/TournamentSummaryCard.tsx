@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 
 import { getTournament } from "@/api/tournaments"
 import type { TournamentDetail } from "@/api/tournaments"
+import SpeciesCatchRatio from "./SpeciesCatchRatio"
 
 function formatScore(score: string | null) {
   return score === null ? "Not available" : `${Number(score).toLocaleString("en-US", { maximumFractionDigits: 2 })} inches`
@@ -91,6 +92,9 @@ export default function TournamentSummaryCard({ tournamentId }: { tournamentId: 
                   {species === "Largemouth Bass" ? "Largemouth" : species === "Smallmouth Bass" ? "Smallmouth" : species}
                 </span>
               ))}
+            </dd>
+            <dd>
+              <SpeciesCatchRatio counts={tournament.species_catch_counts} />
             </dd>
           </div>
         </dl>
