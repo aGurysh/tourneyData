@@ -1,63 +1,77 @@
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
+import { useIsFetching, useQuery, useQueryClient } from "@tanstack/react-query"
 
-import { listTournaments } from "@/api/tournaments"
-import type { Tournament } from "@/api/tournaments"
+import { tournamentQueries, tournamentQueryKey } from "@/api/queries"
 import { Button } from "@/components/ui/button"
+import { usePersistentState } from "@/hooks/usePersistentState"
 import TournamentSummaryCard from "./TournamentSummaryCard"
 
+function isTournamentId(value: string): value is string {
+  return value === "" || (/^[1-9]\d*$/.test(value) && Number.isSafeInteger(Number(value)))
+}
+
 export default function SingleSummary() {
-  const [tournaments, setTournaments] = useState<Tournament[]>([])
-  const [selectedTournamentId, setSelectedTournamentId] = useState("")
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
-  const [attempt, setAttempt] = useState(0)
-
+  const queryClient = useQueryClient()
+  const tournamentsQuery = useQuery(tournamentQueries.list())
+  const tournaments = tournamentsQuery.data
+  const loading = tournaments === undefined && !tournamentsQuery.isError
+  const error = tournamentsQuery.isError
+  const fetching = useIsFetching({ queryKey: tournamentQueryKey }) > 0
+  const [selectedTournamentId, setSelectedTournamentId] = usePersistentState(
+    "tournament-analytics:selected-tournament-id",
+    "",
+    isTournamentId,
+  )
   useEffect(() => {
-    const controller = new AbortController()
-    setLoading(true)
-    setError(false)
+    // Only clear a missing selection after a successful list fetch, never
+    // while restoring the cache or when a background refresh has failed.
+    if (tournamentsQuery.isSuccess && tournamentsQuery.isFetchedAfterMount) {
+      setSelectedTournamentId((id) =>
+        tournaments?.some((item) => String(item.id) === id) ? id : "",
+      )
+    }
+  }, [tournaments, tournamentsQuery.isSuccess, tournamentsQuery.isFetchedAfterMount, setSelectedTournamentId])
 
-    listTournaments(controller.signal)
-      .then((items) => {
-        if (!controller.signal.aborted) setTournaments(items)
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setError(true)
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false)
-      })
-
-    return () => controller.abort()
-  }, [attempt])
+  const availableTournamentId = tournaments?.some(
+    (tournament) => String(tournament.id) === selectedTournamentId,
+  ) ? selectedTournamentId : ""
 
   const placeholder = loading
     ? "Loading tournaments…"
-    : error
+    : error && !tournaments
       ? "Tournaments unavailable"
-      : tournaments.length === 0
+      : tournaments?.length === 0
         ? "No tournaments available"
         : "Select a tournament"
 
   return (
     <section aria-label="Single tournament summary" className="space-y-6">
-       <p className="mt-2 text-sm text-muted-foreground">
+      <div className="flex items-center justify-between gap-4">
+        <p className="mt-2 text-sm text-muted-foreground">
           Analyze the results of a single tournament
         </p>
+        <Button
+          variant="outline"
+          disabled={loading || fetching}
+          onClick={() => void queryClient.invalidateQueries({ queryKey: tournamentQueryKey })}
+        >
+          {fetching ? "Refreshing…" : "Refresh"}
+        </Button>
+      </div>
       <div className="max-w-xl space-y-2">
         <label htmlFor="tournament" className="block text-sm font-medium">
           Tournament
         </label>
         <select
           id="tournament"
-          value={selectedTournamentId}
+          value={availableTournamentId}
           onChange={(event) => setSelectedTournamentId(event.target.value)}
-          disabled={loading || error || tournaments.length === 0}
+          disabled={!tournaments?.length}
           aria-describedby={error ? "tournament-error" : "tournament-status"}
           className="w-full rounded-md border bg-card px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-60"
         >
           <option value="" disabled>{placeholder}</option>
-          {tournaments.map((tournament) => (
+          {tournaments?.map((tournament) => (
             <option key={tournament.id} value={tournament.id}>
               {tournament.name} — {tournament.date}
             </option>
@@ -65,21 +79,21 @@ export default function SingleSummary() {
         </select>
         {error ? (
           <p id="tournament-error" role="alert" className="text-sm text-muted-foreground">
-            Unable to load tournaments.{" "}
-            <Button variant="link" onClick={() => setAttempt((value) => value + 1)} className="h-auto p-0">
+            {tournaments ? "Couldn't refresh tournaments. Showing the saved list." : "Unable to load tournaments."}{" "}
+            <Button variant="link" disabled={fetching} onClick={() => void tournamentsQuery.refetch()} className="h-auto p-0">
               Try again
             </Button>
           </p>
         ) : (
           <p id="tournament-status" role="status" className="text-sm text-muted-foreground">
-            {loading ? "Loading available tournaments…" : tournaments.length === 0 ? "Imported tournaments will appear here." : "Choose a tournament to get started."}
+            {loading ? "Loading available tournaments…" : tournaments?.length === 0 ? "Imported tournaments will appear here." : availableTournamentId ? "Showing the selected tournament." : "Choose a tournament to get started."}
           </p>
         )}
       </div>
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
         <TournamentSummaryCard
-          key={selectedTournamentId}
-          tournamentId={selectedTournamentId ? Number(selectedTournamentId) : null}
+          key={availableTournamentId}
+          tournamentId={availableTournamentId ? Number(availableTournamentId) : null}
         />
       </div>
     </section>

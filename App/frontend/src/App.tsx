@@ -6,10 +6,29 @@ import {
 } from "@/components/layout/Tabs"
 import SingleSummary from "@/components/SingleSummary/SingleSummary"
 import ThemeToggle from "@/components/layout/ThemeToggle"
+import { usePersistentState } from "@/hooks/usePersistentState"
+
+type AnalyticsTab = "single" | "aggregated"
+
+function isAnalyticsTab(value: unknown): value is AnalyticsTab {
+  return value === "single" || value === "aggregated"
+}
 
 export default function App() {
+  const [activeTab, setActiveTab] = usePersistentState(
+    "tournament-analytics:active-tab",
+    "single",
+    isAnalyticsTab,
+  )
+
   return (
-    <Tabs defaultValue="single" className="min-h-svh gap-0 bg-background text-foreground">
+    <Tabs
+      value={activeTab}
+      onValueChange={(value) => {
+        if (isAnalyticsTab(value)) setActiveTab(value)
+      }}
+      className="min-h-svh gap-0 bg-background text-foreground"
+    >
       <header className="border-b bg-card">
         <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto] items-center gap-4 px-4 py-6 sm:px-8 lg:grid-cols-[1fr_auto_1fr]">
           <p className="text-lg font-semibold tracking-tight">

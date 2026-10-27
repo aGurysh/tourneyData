@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 
-import { getTournament } from "@/api/tournaments"
-import type { TournamentDetail } from "@/api/tournaments"
+import { tournamentQueries } from "@/api/queries"
 import { SPECIES_COLORS } from "@/constants/species"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -13,27 +12,8 @@ function formatScore(score: string | null) {
 }
 
 export default function TournamentSummaryCard({ tournamentId }: { tournamentId: number | null }) {
-  const [tournament, setTournament] = useState<TournamentDetail | null>(null)
-  const [error, setError] = useState(false)
-  const [attempt, setAttempt] = useState(0)
-
-  useEffect(() => {
-    if (tournamentId === null) return
-
-    const controller = new AbortController()
-    setError(false)
-    setTournament(null)
-
-    getTournament(tournamentId, controller.signal)
-      .then((detail) => {
-        if (!controller.signal.aborted) setTournament(detail)
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setError(true)
-      })
-
-    return () => controller.abort()
-  }, [tournamentId, attempt])
+  const summaryQuery = useQuery(tournamentQueries.detail(tournamentId))
+  const tournament = summaryQuery.data
 
   return (
     <Card role="article" aria-labelledby="tournament-summary-title" className="min-w-0">
@@ -43,16 +23,27 @@ export default function TournamentSummaryCard({ tournamentId }: { tournamentId: 
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {tournamentId === null ? (
-          <p className="text-muted-foreground">Select a tournament to view its summary.</p>
-        ) : error ? (
-          <p role="alert" className="text-muted-foreground">
-            Unable to load the tournament summary.{" "}
-            <Button variant="link" onClick={() => setAttempt((value) => value + 1)} className="h-auto p-0">
+        {tournament && summaryQuery.isError && (
+          <p role="alert" className="mb-4 text-sm text-muted-foreground">
+            Couldn't refresh the summary. Showing saved data.{" "}
+            <Button variant="link" disabled={summaryQuery.isFetching} onClick={() => void summaryQuery.refetch()} className="h-auto p-0">
               Try again
             </Button>
           </p>
-        ) : tournament === null ? (
+        )}
+        {tournament && summaryQuery.isFetching && (
+          <p role="status" className="mb-4 text-sm text-muted-foreground">Refreshing summary…</p>
+        )}
+        {tournamentId === null ? (
+          <p className="text-muted-foreground">Select a tournament to view its summary.</p>
+        ) : !tournament && summaryQuery.isError ? (
+          <p role="alert" className="text-muted-foreground">
+            Unable to load the tournament summary.{" "}
+            <Button variant="link" disabled={summaryQuery.isFetching} onClick={() => void summaryQuery.refetch()} className="h-auto p-0">
+              Try again
+            </Button>
+          </p>
+        ) : !tournament ? (
           <p role="status" className="text-muted-foreground">Loading tournament summary…</p>
         ) : (
           <dl className="space-y-5">
