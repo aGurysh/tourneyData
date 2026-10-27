@@ -1,4 +1,5 @@
 import type { TournamentDetail } from "@/api/tournaments"
+import { SPECIES_COLORS } from "@/constants/species"
 
 export default function SpeciesCatchRatio({ counts }: { counts: TournamentDetail["species_catch_counts"] }) {
   const total = counts.reduce((sum, item) => sum + item.catch_count, 0)
@@ -15,7 +16,7 @@ export default function SpeciesCatchRatio({ counts }: { counts: TournamentDetail
       maximumFractionDigits: 2,
     }),
     percent: (item.catch_count / total) * 100,
-    color: item.species_name === "Largemouth Bass" ? "bg-green-100" : item.species_name === "Smallmouth Bass" ? "bg-[#efdfcf]" : "bg-gray-200",
+    color: (item.species_name ? SPECIES_COLORS[item.species_name]?.background : undefined) ?? "bg-gray-200",
   }))
   const describe = (segment: typeof segments[number]) => `${segment.name}: ${segment.count.toLocaleString()} (${segment.percent.toFixed(1)}%) · Average length: ${segment.averageLength} inches`
 
