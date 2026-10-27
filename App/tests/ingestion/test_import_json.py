@@ -6,8 +6,10 @@ import pytest
 from sqlalchemy import func, insert, select
 from sqlalchemy.exc import IntegrityError
 
-from tourney_app.import_json import ImportError, import_export, load_export, main
-from tourney_app.models import Catch, Location, Species, Tournament, TournamentLocation
+from backend.ingestion.validation import ImportError, load_export
+from backend.ingestion.importer import import_export
+from backend.ingestion.cli import main
+from backend.db.models import Catch, Location, Species, Tournament, TournamentLocation
 
 
 @pytest.fixture
@@ -147,6 +149,6 @@ def test_database_failure_rolls_back_replacement(connection, export_data, read_e
 def test_cli_rejects_raw_json_without_connecting(tmp_path, monkeypatch, capsys):
     path = tmp_path / "raw.json"
     path.write_text('{"standings": []}')
-    monkeypatch.setattr("tourney_app.import_json.create_db_engine", lambda: pytest.fail("Must not connect"))
+    monkeypatch.setattr("backend.ingestion.cli.create_db_engine", lambda: pytest.fail("Must not connect"))
     assert main([str(path), "--apply"]) == 2
     assert "cleaned export" in capsys.readouterr().err

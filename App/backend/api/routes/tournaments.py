@@ -3,10 +3,10 @@ from typing import Annotated
 from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import func, select
 
-from tourney_app.db import DatabaseSession
-from tourney_app.models import Catch, Location, Species, Tournament, TournamentLocation
-from tourney_app.routes.common import Limit, Offset, OptionalId, TournamentId
-from tourney_app.schemas import CatchResponse, Page, TournamentDetail, TournamentResponse
+from backend.api.dependencies import DatabaseSession
+from backend.db.models import Catch, Location, Species, Tournament, TournamentLocation
+from backend.api.routes.common import Limit, Offset, OptionalId, TournamentId
+from backend.api.schemas import CatchResponse, Page, TournamentDetail, TournamentResponse
 
 router = APIRouter(prefix="/tournaments", tags=["tournaments"])
 

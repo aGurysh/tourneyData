@@ -1,8 +1,42 @@
-# Tournament analytics backend
+# Tournament analytics app
 
-This folder contains the PostgreSQL foundation for the app. The existing scraper
+This folder houses the backend and frontend. The existing scraper
 and plotting scripts stay at the repository root. The tables follow
 [`../DB_SCHEMA.md`](../DB_SCHEMA.md), including the two tournament standings scores.
+
+## Project layout
+
+```text
+App/
+├── backend/
+│   ├── main.py             # FastAPI app, middleware, and router registration
+│   ├── config.py           # Shared environment loading and app paths
+│   ├── api/
+│   │   ├── dependencies.py # Request-scoped database sessions
+│   │   ├── schemas.py      # API response contracts
+│   │   └── routes/         # Health, tournaments, and locations endpoints
+│   ├── db/
+│   │   ├── session.py      # Database URL and engine configuration
+│   │   └── models.py       # SQLAlchemy table definitions
+│   └── ingestion/
+│       ├── cli.py          # Import arguments, output, and exit codes
+│       ├── validation.py   # Cleaned-export validation and normalization
+│       └── importer.py     # Import previews and transactional writes
+├── frontend/               # Reserved for the web UI and its own build config
+├── migrations/             # Versioned Alembic schema changes
+├── tests/
+│   ├── conftest.py         # Shared isolated PostgreSQL fixtures
+│   ├── api/
+│   ├── db/
+│   └── ingestion/
+├── pyproject.toml          # Python dependencies and backend package discovery
+├── alembic.ini
+└── compose.yaml
+```
+
+Run backend commands from `App`. The frontend will keep its own `package.json`
+and build configuration inside `frontend/`. Scraping remains separate: capture
+and review a cleaned JSON export, preview its import, then apply it explicitly.
 
 ## Start locally
 
@@ -36,12 +70,12 @@ variables override `.env`. Keep `.env` out of Git; `.env.example` is the templat
 
 ## How the pieces fit together
 
-- `tourney_app/models.py` describes the current tables as typed Python classes.
+- `backend/db/models.py` describes the current tables as typed Python classes.
   SQLAlchemy also uses these definitions to build queries and compare schemas.
 - `migrations/versions/0001_initial_schema.py` contains the actual, versioned
   commands that create the tables. It is independent of future model edits.
 - `migrations/env.py` connects Alembic to the models and database configuration.
-- `tourney_app/db.py` reads the connection URL and creates database engines.
+- `backend/db/session.py` reads the connection URL and creates database engines.
   Importing Python modules never connects or creates tables automatically.
 - `compose.yaml` runs PostgreSQL 18 for local development.
 
@@ -141,21 +175,21 @@ at the repository root and is independent of this command.
 First preview an import (reads the database, writes nothing):
 
 ```bash
-.venv/bin/python -m tourney_app.import_json ../output/kawpa-allegheny-achigan-showdown.json
+.venv/bin/python -m backend.ingestion.cli ../output/kawpa-allegheny-achigan-showdown.json
 ```
 
 Review the cleaned JSON, the capture timestamp (`scraped_at`), waterbody names
 and boundaries, and any warnings. Then use the same command with `--apply`:
 
 ```bash
-.venv/bin/python -m tourney_app.import_json ../output/kawpa-allegheny-achigan-showdown.json --apply
+.venv/bin/python -m backend.ingestion.cli ../output/kawpa-allegheny-achigan-showdown.json --apply
 ```
 
 Repeat with another export:
 
 ```bash
-.venv/bin/python -m tourney_app.import_json ../output/kawpa-bass-on-the-bay-11.json
-.venv/bin/python -m tourney_app.import_json ../output/kawpa-bass-on-the-bay-11.json --apply
+.venv/bin/python -m backend.ingestion.cli ../output/kawpa-bass-on-the-bay-11.json
+.venv/bin/python -m backend.ingestion.cli ../output/kawpa-bass-on-the-bay-11.json --apply
 ```
 
 The command validates the whole file before connecting. It rejects blocking
@@ -182,8 +216,8 @@ duplicate inserts. To load a newer reviewed snapshot, preview and apply with
 `--replace`:
 
 ```bash
-.venv/bin/python -m tourney_app.import_json ../output/kawpa-allegheny-achigan-showdown.json --replace
-.venv/bin/python -m tourney_app.import_json ../output/kawpa-allegheny-achigan-showdown.json --replace --apply
+.venv/bin/python -m backend.ingestion.cli ../output/kawpa-allegheny-achigan-showdown.json --replace
+.venv/bin/python -m backend.ingestion.cli ../output/kawpa-allegheny-achigan-showdown.json --replace --apply
 ```
 
 Replacement keeps the tournament's database ID, updates its metadata/scores,
@@ -207,7 +241,7 @@ From `App`, install/update the dependencies and start the development server:
 
 ```bash
 .venv/bin/python -m pip install -e '.[dev]'
-.venv/bin/uvicorn tourney_app.main:app --reload
+.venv/bin/uvicorn backend.main:app --reload
 ```
 
 Keep PostgreSQL running. Visit [interactive API documentation](http://localhost:8000/docs)

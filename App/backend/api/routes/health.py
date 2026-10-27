@@ -2,8 +2,8 @@ from fastapi import APIRouter, Response
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
-from tourney_app.db import DatabaseSession
-from tourney_app.schemas import HealthResponse
+from backend.api.dependencies import DatabaseSession
+from backend.api.schemas import HealthResponse
 
 router = APIRouter(tags=["health"])
 
