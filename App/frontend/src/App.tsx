@@ -30,7 +30,7 @@ export default function App() {
       className="min-h-svh gap-0 bg-background text-foreground"
     >
       <header className="border-b bg-card">
-        <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto] items-center gap-4 px-4 py-6 sm:px-8 lg:grid-cols-[1fr_auto_1fr]">
+        <div className="mx-auto grid max-w-[100rem] grid-cols-[1fr_auto] items-center gap-4 px-4 py-6 sm:px-8 lg:grid-cols-[1fr_auto_1fr]">
           <p className="text-lg font-semibold tracking-tight">
              Kayak Tournament Advantage
           </p>
@@ -50,7 +50,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-8 sm:py-8">
+      <main className="mx-auto w-full max-w-[100rem] px-4 py-6 sm:px-8 sm:py-8">
           <TabsContent value="single">
             <SingleSummary />
           </TabsContent>
