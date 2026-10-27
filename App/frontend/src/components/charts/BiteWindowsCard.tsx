@@ -1,20 +1,30 @@
 import { useId, useState } from "react"
 import type { ReactNode } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Settings2 } from "lucide-react"
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
+import { Popover, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle, PopoverTrigger } from "@/components/ui/popover"
 import { describeBiteWindow, formatWindowTime } from "@/lib/biteWindows"
-import type { BiteWindow } from "@/lib/biteWindows"
+import type { BiteWindow, BiteWindowFilters } from "@/lib/biteWindows"
 
 interface BiteWindowsCardProps {
   windows: readonly BiteWindow[]
   timeLabel: string
   status?: ReactNode
   emptyMessage?: string
+  filters?: BiteWindowFilters
+  onFiltersChange?: (filters: BiteWindowFilters) => void
 }
 
 // Presentation only: accepts counts from any dataset, including filtered or
 // aggregated catches. Data acquisition and binning belong to the caller.
-export default function BiteWindowsCard({ windows, timeLabel, status, emptyMessage = "No catches to display." }: BiteWindowsCardProps) {
+export default function BiteWindowsCard({ windows, timeLabel, status, filters, onFiltersChange, emptyMessage = "No catches to display." }: BiteWindowsCardProps) {
   const titleId = useId()
+  const speciesId = useId()
+  const lengthId = useId()
   const [activeMinute, setActiveMinute] = useState<number | null>(null)
   const active = windows.find((window) => window.startMinute === activeMinute)
   const total = windows.reduce((sum, window) => sum + window.count, 0)
@@ -34,8 +44,52 @@ export default function BiteWindowsCard({ windows, timeLabel, status, emptyMessa
       <CardHeader>
         <CardTitle><h2 id={titleId}>Bite Windows</h2></CardTitle>
         <CardDescription>Catches in 30-minute windows · {timeLabel}</CardDescription>
+        {filters && onFiltersChange && (
+          <CardAction>
+            <Popover>
+              <PopoverTrigger render={<Button variant="outline" size="sm" aria-label="Bite window settings" />}>
+                <Settings2 aria-hidden="true" /> Settings
+              </PopoverTrigger>
+              <PopoverContent align="end" className="max-w-[calc(100vw-2rem)] gap-4 p-4">
+                <PopoverHeader>
+                  <PopoverTitle>Bite window settings</PopoverTitle>
+                  <PopoverDescription>Filters update the chart immediately.</PopoverDescription>
+                </PopoverHeader>
+                <div className="grid gap-2">
+                  <Label htmlFor={speciesId}>Species</Label>
+                  <NativeSelect id={speciesId} className="w-full" value={filters.species}
+                    onChange={(event) => onFiltersChange({ ...filters, species: event.target.value as BiteWindowFilters["species"] })}>
+                    <NativeSelectOption value="both">Both</NativeSelectOption>
+                    <NativeSelectOption value="Largemouth Bass">Largemouth</NativeSelectOption>
+                    <NativeSelectOption value="Smallmouth Bass">Smallmouth</NativeSelectOption>
+                  </NativeSelect>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor={lengthId}>Minimum length (inches)</Label>
+                  <Input id={lengthId} type="number" min={0} step="any" placeholder="No minimum"
+                    value={filters.minimumLength || ""}
+                    onChange={(event) => {
+                      const minimumLength = Number(event.target.value)
+                      if (Number.isFinite(minimumLength) && minimumLength >= 0) {
+                        onFiltersChange({ ...filters, minimumLength })
+                      }
+                    }} />
+                </div>
+                <Button variant="outline" size="sm" disabled={filters.species === "both" && filters.minimumLength === 0}
+                  onClick={() => onFiltersChange({ species: "both", minimumLength: 0 })}>
+                  Reset filters
+                </Button>
+              </PopoverContent>
+            </Popover>
+          </CardAction>
+        )}
       </CardHeader>
       <CardContent className="space-y-3">
+        {filters && (
+          <p className="text-xs text-muted-foreground" aria-live="polite">
+            {filters.species === "both" ? "Largemouth + Smallmouth" : filters.species.replace(" Bass", "")} · {filters.minimumLength > 0 ? `${filters.minimumLength}″ minimum` : "No minimum length"}
+          </p>
+        )}
         {status}
         {total === 0 ? (
           emptyMessage && <p className="text-muted-foreground">{emptyMessage}</p>

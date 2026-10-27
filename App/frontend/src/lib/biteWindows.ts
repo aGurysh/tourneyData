@@ -8,6 +8,21 @@ export interface BiteWindow {
   count: number
 }
 
+export interface BiteWindowFilters {
+  species: "both" | "Largemouth Bass" | "Smallmouth Bass"
+  minimumLength: number
+}
+
+export function matchesBiteWindowFilters(
+  sample: { species: string | null; length: number },
+  filters: BiteWindowFilters,
+) {
+  const speciesMatches = filters.species === "both"
+    ? sample.species === "Largemouth Bass" || sample.species === "Smallmouth Bass"
+    : sample.species === filters.species
+  return speciesMatches && Number.isFinite(sample.length) && sample.length >= filters.minimumLength
+}
+
 // Group by local time of day, across any number of dates and timezones.
 // Callers can filter their catch records before creating these samples.
 export function buildBiteWindows(samples: readonly CatchTimeSample[]) {
