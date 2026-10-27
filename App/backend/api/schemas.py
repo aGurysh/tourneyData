@@ -4,7 +4,7 @@ from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import Generic, Literal, TypeVar
 
-from pydantic import BaseModel, field_serializer
+from pydantic import BaseModel, Field, field_serializer
 
 Item = TypeVar("Item")
 
@@ -18,6 +18,36 @@ class Page(BaseModel, Generic[Item]):
 
 class HealthResponse(BaseModel):
     status: Literal["ok", "unavailable"]
+
+
+class WeatherCoordinates(BaseModel):
+    latitude: float = Field(ge=-90, le=90, allow_inf_nan=False)
+    longitude: float = Field(ge=-180, le=180, allow_inf_nan=False)
+
+
+class WeatherHour(BaseModel):
+    time: datetime
+    temperature_f: float | None = Field(allow_inf_nan=False)
+    pressure_hpa: float | None = Field(gt=0, allow_inf_nan=False)
+    cloud_cover_percent: float | None = Field(ge=0, le=100, allow_inf_nan=False)
+    wind_speed_mph: float | None = Field(ge=0, allow_inf_nan=False)
+    wind_direction_degrees: float | None = Field(ge=0, le=360, allow_inf_nan=False)
+
+
+class TournamentWeather(BaseModel):
+    tournament_id: int
+    source: Literal["Open-Meteo"] = "Open-Meteo"
+    source_url: str = "https://open-meteo.com/"
+    attribution: str = "Weather data by Open-Meteo, CC BY 4.0"
+    data_kind: Literal["historical_reanalysis"] = "historical_reanalysis"
+    timezone: str
+    starts_at: datetime
+    ends_at: datetime
+    requested_coordinates: WeatherCoordinates
+    grid_coordinates: WeatherCoordinates
+    fetched_at: datetime
+    coverage: Literal["complete", "partial"]
+    hourly: list[WeatherHour]
 
 
 class LocationResponse(BaseModel):

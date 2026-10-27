@@ -207,7 +207,7 @@ def test_database_failures_do_not_expose_exception_details(api_client):
 def test_openapi_docs_and_cors(api_client):
     assert api_client.get("/docs").status_code == 200
     document = api_client.get("/openapi.json").json()
-    assert set(document["paths"]) == {"/health", "/tournaments", "/tournaments/{tournament_id}", "/tournaments/{tournament_id}/catches", "/locations"}
+    assert set(document["paths"]) == {"/health", "/tournaments", "/tournaments/{tournament_id}", "/tournaments/{tournament_id}/catches", "/tournaments/{tournament_id}/weather", "/locations"}
     headers = {"Origin": "http://localhost:5173", "Access-Control-Request-Method": "GET"}
     assert api_client.options("/tournaments", headers=headers).headers["access-control-allow-origin"] == "http://localhost:5173"
     headers["Origin"] = "https://unconfigured.test"

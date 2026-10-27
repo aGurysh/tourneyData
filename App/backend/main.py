@@ -4,6 +4,8 @@ from contextlib import asynccontextmanager
 import logging
 import os
 
+import httpx
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -13,6 +15,7 @@ from sqlalchemy.orm import sessionmaker
 from backend.config import load_settings
 from backend.db.session import create_db_engine
 from backend.api.routes import health, locations, tournaments
+from backend.weather import WeatherService
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +25,9 @@ async def lifespan(app: FastAPI):
     engine = create_db_engine()
     app.state.session_factory = sessionmaker(bind=engine)
     try:
-        yield
+        with httpx.Client(timeout=httpx.Timeout(15.0, connect=5.0), follow_redirects=False) as client:
+            app.state.weather_service = WeatherService(client)
+            yield
     finally:
         engine.dispose()
 
