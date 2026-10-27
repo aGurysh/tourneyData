@@ -24,7 +24,8 @@ def export_data():
             "winning_length_inches": "19.25", "top_10_percent_length_inches": "19.25",
         },
         "locations": [{"name": "Test River", "state": "pa", "boundary_notes": "Upstream section"}],
-        "catches": [{"angler_name": "Test Angler", "catch_time": "2026-07-18T08:30:00-04:00",
+        "anglers": [{"external_id": "angler-1", "name": "Test Angler"}],
+        "catches": [{"source_angler_id": "angler-1", "angler_name": "Test Angler", "catch_time": "2026-07-18T08:30:00-04:00",
                      "species": "Bass", "length_inches": "19.25", "external_id": "catch-1"}],
         "summary": {"ready_for_review": True, "blocking_issues": 0, "source_anglers": 1,
                     "anglers_processed": 1, "fish_discovered": 1, "fish_exported": 1, "fish_skipped": 0},
@@ -193,3 +194,11 @@ def test_cli_rejects_raw_json_without_connecting(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr("backend.ingestion.cli.create_db_engine", lambda: pytest.fail("Must not connect"))
     assert main([str(path), "--apply"]) == 2
     assert "cleaned export" in capsys.readouterr().err
+
+
+def test_legacy_export_requires_raw_source_for_identity(tmp_path, export_data):
+    del export_data["anglers"]
+    path = tmp_path / "legacy.json"
+    path.write_text(json.dumps(export_data))
+    with pytest.raises(ImportError, match="matching valid .raw.json"):
+        load_export(path)

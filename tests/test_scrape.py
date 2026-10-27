@@ -116,7 +116,7 @@ class ExportTests(unittest.TestCase):
         self.assertEqual(result['tournament']['ends_at'], '2026-07-18T18:30:00+00:00')
         self.assertEqual(result['tournament']['timezone'], 'America/New_York')
         self.assertEqual(result['catches'][0], {
-            'angler_name': 'Test Angler', 'catch_time': '2026-07-18T11:14:23+00:00',
+            'angler_name': 'Test Angler', 'source_angler_id': '10', 'catch_time': '2026-07-18T11:14:23+00:00',
             'species': 'Largemouth Bass', 'length_inches': '18.25', 'external_id': '123'})
         self.assertTrue(result['summary']['ready_for_review'])
         self.assertEqual(result['summary']['source_anglers'], 2)

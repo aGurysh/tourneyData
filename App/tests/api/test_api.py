@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from backend.api.dependencies import get_session
 from backend.main import create_app
-from backend.db.models import Base, Catch, Location, Species, Tournament, TournamentLocation
+from backend.db.models import Angler, TournamentEntry, Base, Catch, Location, Species, Tournament, TournamentLocation
 
 
 @pytest.fixture
@@ -27,6 +27,17 @@ def api_client(connection, monkeypatch):
     app.dependency_overrides[get_session] = test_session
     with TestClient(app) as client:
         yield client
+
+
+def add_test_identity(connection, tournament_id, name):
+    from sqlalchemy.dialects.postgresql import insert as pg_insert
+    identity = connection.scalar(select(Angler.id).where(Angler.external_id == name))
+    if identity is None:
+        identity = connection.scalar(insert(Angler).values(external_id=name, name=name,
+            name_observed_at=datetime.now(timezone.utc)).returning(Angler.id))
+    connection.execute(pg_insert(TournamentEntry).values(tournament_id=tournament_id, angler_id=identity,
+        angler_name=name).on_conflict_do_nothing())
+    return identity
 
 
 @pytest.fixture
@@ -53,7 +64,7 @@ def sample_data(connection):
         dict(tournament_id=newer, angler_name="Other Angler", species_id=species, external_id="3", length_inches=Decimal("20.00")),
     ]
     for row in rows:
-        connection.execute(insert(Catch).values(**row, catch_time=datetime(2026, 7, 18, 12, 30, tzinfo=timezone.utc)))
+        connection.execute(insert(Catch).values(**row, angler_id=add_test_identity(connection, newer, row["angler_name"]), catch_time=datetime(2026, 7, 18, 12, 30, tzinfo=timezone.utc)))
     return {"older": older, "newer": newer, "tied": tied, "locations": locations, "species": species}
 
 
@@ -116,6 +127,7 @@ def test_details_include_both_species_from_catches(api_client, connection, sampl
     largemouth = connection.scalar(insert(Species).values(name="Largemouth Bass").returning(Species.id))
     connection.execute(insert(Catch).values(
         tournament_id=sample_data["newer"], angler_name="Another Angler",
+        angler_id=add_test_identity(connection, sample_data["newer"], "Another Angler"),
         species_id=largemouth, length_inches=Decimal("17.50"),
         catch_time=datetime(2026, 7, 18, 13, 0, tzinfo=timezone.utc),
     ))
@@ -234,3 +246,12 @@ def test_app_lifecycle_disposes_engine_and_cors_is_configurable(monkeypatch):
         headers = {"Origin": "https://frontend.test", "Access-Control-Request-Method": "GET"}
         assert client.options("/locations", headers=headers).headers["access-control-allow-origin"] == "https://frontend.test"
     engine.dispose.assert_called_once()
+
+
+def test_filter_catches_by_stable_angler_id(api_client, sample_data):
+    path = f"/tournaments/{sample_data['newer']}/catches"
+    rows = api_client.get(path).json()["items"]
+    assert all(isinstance(row["angler_id"], int) for row in rows)
+    page = api_client.get(path, params={"angler_id": rows[0]["angler_id"]}).json()
+    assert page["total"] == 2
+    assert api_client.get(path, params={"angler_id": 0}).status_code == 422

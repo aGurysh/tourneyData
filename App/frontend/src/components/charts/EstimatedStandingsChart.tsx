@@ -23,7 +23,7 @@ export default function EstimatedStandingsChart({ anglers, selected, start, end,
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(600)
-  const [activeCatch, setActiveCatch] = useState<{ name: string; time: number } | null>(null)
+  const [activeCatch, setActiveCatch] = useState<{ id: number; time: number } | null>(null)
   useEffect(() => {
     if (!ref.current) return
     const observer = new ResizeObserver(([entry]) => {
@@ -43,7 +43,7 @@ export default function EstimatedStandingsChart({ anglers, selected, start, end,
   const catchDetails = (point: StandingPoint) => `${point.lengths.map((length) => `${length.toFixed(2)}″`).join(" + ")} ${point.lengths.length === 1 ? "fish" : "fish (same time)"} · Estimated place: ${point.tied ? "Tied " : ""}#${point.place}`
   const path = (angler: AnglerStanding) => `M ${left} ${bottom} `
     + angler.points.map((point) => `H ${x(point.time)} V ${y(point.total)}`).join(" ") + ` H ${right}`
-  const activeAngler = selected.find((angler) => angler.name === activeCatch?.name)
+  const activeAngler = selected.find((angler) => angler.id === activeCatch?.id)
   const active = activeAngler?.points.find((point) => point.time === activeCatch?.time)
   const tickCount = Math.max(2, Math.floor((right - left) / 90))
 
@@ -57,15 +57,15 @@ export default function EstimatedStandingsChart({ anglers, selected, start, end,
             <text x={left - 8} y={y(tick) + 4} textAnchor="end" className="fill-muted-foreground text-[11px]">{tick}</text>
           </g>
         ))}
-        {anglers.filter((angler) => !selected.some((item) => item.name === angler.name)).map((angler) => (
-          <path key={angler.name} d={path(angler)} fill="none" className="stroke-muted-foreground/25" strokeWidth={1} aria-hidden="true" />
+        {anglers.filter((angler) => !selected.some((item) => item.id === angler.id)).map((angler) => (
+          <path key={angler.id} d={path(angler)} fill="none" className="stroke-muted-foreground/25" strokeWidth={1} aria-hidden="true" />
         ))}
         {selected.map((angler) => (
-          <g key={angler.name} className={standingColor(anglers.indexOf(angler))}>
+          <g key={angler.id} className={standingColor(anglers.indexOf(angler))}>
             <path d={path(angler)} fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true" />
             {angler.points.map((point) => {
               const description = `${angler.name}: ${catchDetails(point)} at ${formatter.format(point.time)}`
-              const activate = () => setActiveCatch({ name: angler.name, time: point.time })
+              const activate = () => setActiveCatch({ id: angler.id, time: point.time })
               return (
                 <g key={point.time}>
                   <circle cx={x(point.time)} cy={y(point.total)} r={4} fill="currentColor" aria-hidden="true" />

@@ -1,4 +1,8 @@
-# Initial tournament imports
+# Scraper exports and raw capture
+
+For one-command database ingestion from a tournament list, use
+[INGESTION.md](INGESTION.md). The workflow below remains available for standalone
+exports and plotting; cleaned files are optional for the batch importer.
 
 Run from the repository root using the existing virtual environment:
 
@@ -34,7 +38,9 @@ the original raw file intact.
 
 The export contains one tournament object, a list of locations with optional
 boundary notes, and a list of catches. Catch fields are `angler_name`,
-`catch_time`, `species`, `length_inches`, and nullable `external_id`. Species
+`source_angler_id`, `catch_time`, `species`, `length_inches`, and nullable `external_id`.
+An `anglers` list preserves source IDs and names for every participant, including
+those with zero fish. Species
 names and locations are resolved to database IDs during a later import;
 database primary keys and foreign keys are not invented by the scraper.
 Lengths are decimal strings to retain exact precision. Catch times include a

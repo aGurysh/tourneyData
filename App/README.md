@@ -1,5 +1,8 @@
 # Tournament analytics app
 
+For streamlined collection and imports, see [Tournament ingestion](../INGESTION.md).
+Use `App/.venv/bin/python ingest.py new_tournaments.json` from the repository root.
+
 This folder houses the backend and frontend. The existing scraper
 and plotting scripts stay at the repository root. The tables follow
 [`../DB_SCHEMA.md`](../DB_SCHEMA.md), including the two tournament standings scores.
@@ -53,7 +56,10 @@ docker compose up -d --wait db
 .venv/bin/alembic current
 ```
 
-`upgrade head` creates the five application tables and an `alembic_version` table
+For an existing database with catches, follow the staged angler backfill in
+[INGESTION.md](../INGESTION.md) before upgrading past revision 0003.
+
+`upgrade head` creates the seven application tables and an `alembic_version` table
 that tracks the applied migration. Running it again is safe: applied migrations
 are not repeated. It does not scrape or import tournament data.
 

@@ -90,6 +90,7 @@ class TournamentDetail(TournamentResponse):
 
 
 class CatchResponse(BaseModel):
+    angler_id: int
     id: int
     tournament_id: int
     angler_name: str

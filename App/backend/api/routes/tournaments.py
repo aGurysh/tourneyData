@@ -97,6 +97,7 @@ def get_tournament(tournament_id: TournamentId, session: DatabaseSession):
 def list_catches(
     tournament_id: TournamentId, session: DatabaseSession,
     limit: Limit = 50, offset: Offset = 0, species_id: OptionalId = None,
+    angler_id: OptionalId = None,
     angler_name: Annotated[str | None, Query(min_length=1, max_length=200)] = None,
 ):
     if session.scalar(select(Tournament.id).where(Tournament.id == tournament_id)) is None:
@@ -104,6 +105,8 @@ def list_catches(
     filters = [Catch.tournament_id == tournament_id]
     if species_id is not None:
         filters.append(Catch.species_id == species_id)
+    if angler_id is not None:
+        filters.append(Catch.angler_id == angler_id)
     if angler_name is not None:
         filters.append(func.lower(Catch.angler_name) == angler_name.lower())
     total = session.scalar(select(func.count()).select_from(Catch).where(*filters))

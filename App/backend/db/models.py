@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from sqlalchemy import (
     BigInteger, CheckConstraint, Date, DateTime, Double, ForeignKey, Identity,
-    Index, MetaData, Numeric, Text, UniqueConstraint,
+    ForeignKeyConstraint, Index, MetaData, Numeric, Text, UniqueConstraint,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -82,10 +82,32 @@ class Species(Base):
     name: Mapped[str] = mapped_column(Text, unique=True)
 
 
+class Angler(Base):
+    __tablename__ = "anglers"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    external_id: Mapped[str] = mapped_column(Text, unique=True)
+    name: Mapped[str] = mapped_column(Text)
+    name_observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class TournamentEntry(Base):
+    __tablename__ = "tournament_entries"
+    __table_args__ = (Index("ix_tournament_entries_angler_id", "angler_id"),)
+
+    tournament_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("tournaments.id"), primary_key=True)
+    angler_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("anglers.id"), primary_key=True)
+    angler_name: Mapped[str] = mapped_column(Text)
+
+
 class Catch(Base):
     __tablename__ = "catches"
     __table_args__ = (
         UniqueConstraint("tournament_id", "external_id", name="uq_catches_tournament_id_external_id"),
+        ForeignKeyConstraint(["tournament_id", "angler_id"],
+                             ["tournament_entries.tournament_id", "tournament_entries.angler_id"],
+                             name="fk_catches_tournament_id_angler_id_tournament_entries"),
+        Index("ix_catches_angler_id", "angler_id"),
         CheckConstraint(
             "length_inches > 0 AND length_inches <> 'NaN'::numeric", name="length_positive",
         ),
@@ -95,6 +117,7 @@ class Catch(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
     tournament_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("tournaments.id"))
+    angler_id: Mapped[int] = mapped_column(BigInteger)
     angler_name: Mapped[str] = mapped_column(Text)
     catch_time: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     species_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("species.id"))
