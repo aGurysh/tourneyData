@@ -1,11 +1,17 @@
 import { queryOptions, skipToken } from "@tanstack/react-query"
-import { apiBaseUrl } from "./client"
-import { getTournament, listTournamentCatches, listTournaments } from "./tournaments"
+import { ApiError, apiBaseUrl } from "./client"
+import { getTournament, getTournamentWeather, listTournamentCatches, listTournaments } from "./tournaments"
 
 // Include the API URL so separate backends never share cached responses.
 export const tournamentQueryKey = ["tournaments", apiBaseUrl] as const
 
 export const tournamentQueries = {
+  weather: (id: number | null) => queryOptions({
+    queryKey: [...tournamentQueryKey, "weather", id],
+    queryFn: id === null ? skipToken : ({ signal }) => getTournamentWeather(id, signal),
+    retry: (count, error) => count < 1 && !(error instanceof ApiError && [404, 409, 503].includes(error.status)),
+    meta: { persist: true },
+  }),
   list: () => queryOptions({
     queryKey: [...tournamentQueryKey, "list"],
     queryFn: ({ signal }) => listTournaments(signal),
