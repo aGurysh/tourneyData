@@ -3,12 +3,38 @@ from typing import Annotated
 from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import func, select
 
-from backend.api.dependencies import DatabaseSession
+from backend.api.dependencies import DatabaseSession, Weather
 from backend.db.models import Catch, Location, Species, Tournament, TournamentLocation
 from backend.api.routes.common import Limit, Offset, OptionalId, TournamentId
-from backend.api.schemas import CatchResponse, Page, TournamentDetail, TournamentResponse
+from backend.api.schemas import CatchResponse, Page, TournamentDetail, TournamentResponse, TournamentWeather
+from backend.weather import WeatherProviderError, WeatherTimeout, WeatherUnavailable
 
 router = APIRouter(prefix="/tournaments", tags=["tournaments"])
+
+
+@router.get("/{tournament_id}/weather", response_model=TournamentWeather, responses={
+    404: {"description": "Tournament not found"},
+    409: {"description": "Tournament has no weather coordinates or duration"},
+    502: {"description": "Weather provider failed or returned invalid data"},
+    503: {"description": "Historical weather is not available yet"},
+    504: {"description": "Weather provider timed out"},
+})
+def get_tournament_weather(tournament_id: TournamentId, session: DatabaseSession, weather: Weather):
+    tournament = session.get(Tournament, tournament_id)
+    if tournament is None:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+    if any(getattr(tournament, key) is None for key in (
+        "weather_latitude", "weather_longitude", "starts_at", "ends_at",
+    )):
+        raise HTTPException(status_code=409, detail="Tournament weather coordinates and start/end times are required")
+    try:
+        return weather.get_tournament_weather(tournament)
+    except WeatherTimeout:
+        raise HTTPException(status_code=504, detail="Weather provider timed out") from None
+    except WeatherProviderError:
+        raise HTTPException(status_code=502, detail="Weather provider temporarily unavailable") from None
+    except WeatherUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from None
 
 
 def tournament_query():
