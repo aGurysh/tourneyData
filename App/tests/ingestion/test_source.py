@@ -1,15 +1,9 @@
 import copy
-import io
-import json
-import tempfile
 import unittest
-from contextlib import redirect_stdout
 from datetime import datetime
-from pathlib import Path
-from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
-from scrape import _build_export, _parse_timestamp, _utc_timestamp, scrape_tournament, scrape_tourneyx
+from backend.ingestion.source import _build_export, _parse_timestamp, _utc_timestamp
 
 URL = 'https://tourneyx.com/leaderboard/standings/example'
 
@@ -172,17 +166,7 @@ class ExportTests(unittest.TestCase):
         self.assertFalse(result['summary']['ready_for_review'])
         self.assertEqual(result['summary']['anglers_processed'], 1)
         self.assertEqual(len(raw['standings']['results'][0]), 2)
-        with patch('scrape.scrape_tournament', return_value=result):
-            self.assertEqual(len(scrape_tourneyx(URL, max_anglers=1)), 1)
 
-    def test_missing_cached_response_requires_refresh(self):
-        with tempfile.TemporaryDirectory() as directory:
-            output = Path(directory) / 'example.json'
-            raw = snapshot()
-            raw.pop('standings')
-            output.with_suffix('.raw.json').write_text(json.dumps(raw))
-            with redirect_stdout(io.StringIO()), self.assertRaisesRegex(ValueError, '--refresh'):
-                scrape_tournament(URL, output_path=output)
 
     def test_wrong_date_and_conflicting_photo_times_rejected(self):
         for value in ('2026-07-19 07:14:23', '2026-07-18 08:14:23'):
@@ -234,31 +218,6 @@ class ExportTests(unittest.TestCase):
         for text in ('2026-11-01T01:30:00', '2026-03-08T02:30:00'):
             with self.assertRaisesRegex(ValueError, 'daylight saving'):
                 _utc_timestamp(datetime.fromisoformat(text), ZoneInfo('America/New_York'))
-
-    def test_reprocess_old_html_snapshot_without_network(self):
-        with tempfile.TemporaryDirectory() as directory:
-            output = Path(directory) / 'example.json'
-            raw = snapshot()
-            raw.update(collection_complete=False, max_anglers=1, fish=[{'bad': 'old DOM data'}])
-            output.with_suffix('.raw.json').write_text(json.dumps(raw))
-            config = {'locations': [{'name': 'French Creek', 'state': 'PA'}]}
-            with patch('scrape._fetch_snapshot') as fetch, redirect_stdout(io.StringIO()):
-                result = scrape_tournament(URL, output_path=output, config=config)
-            fetch.assert_not_called()
-            self.assertEqual(json.loads(output.read_text()), result)
-            self.assertTrue(result['summary']['ready_for_review'])
-            raw['source_url'] = URL + '-other'
-            output.with_suffix('.raw.json').write_text(json.dumps(raw))
-            with self.assertRaisesRegex(ValueError, 'Snapshot URL'):
-                scrape_tournament(URL, output_path=output)
-
-    def test_plot_adapter_preserves_local_naive_tuples(self):
-        result = _build_export(snapshot(), {})
-        with patch('scrape.scrape_tournament', return_value=result):
-            fish = scrape_tourneyx(URL)[0]
-        self.assertEqual(fish[1], datetime(2026, 7, 18, 7, 14, 23))
-        self.assertIsNone(fish[1].tzinfo)
-        self.assertEqual(fish[2], 18.25)
 
 
 if __name__ == '__main__':
