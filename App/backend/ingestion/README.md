@@ -1,6 +1,6 @@
 # Tournament ingestion
 
-From the repository root, put tournament URLs in `new_tournaments.json`:
+From the repository root, put tournament URLs in `App/backend/ingestion/new_tournaments.json`:
 
 ```json
 [
@@ -16,12 +16,13 @@ From the repository root, put tournament URLs in `new_tournaments.json`:
 Then run:
 
 ```bash
-App/.venv/bin/python ingest.py new_tournaments.json
+App/.venv/bin/python -m backend.ingestion
 ```
 
-The default manifest is `new_tournaments.json`, so `App/.venv/bin/python ingest.py`
-works too. The checked-in manifest is empty. The example manifest demonstrates
-both formats; review its waterbodies before using it.
+The default manifest is `App/backend/ingestion/new_tournaments.json`, resolved
+relative to the module rather than the working directory. An explicit manifest path can also be
+supplied. The adjacent example manifest demonstrates overrides; review its
+waterbodies before using it.
 
 New tournaments, all standings participants (including zero-fish anglers), and
 catches are imported automatically after validation. Existing tournaments are
@@ -34,13 +35,13 @@ Useful options:
 
 ```bash
 # Collect/validate and preview without changing the database.
-App/.venv/bin/python ingest.py new_tournaments.json --dry-run
+App/.venv/bin/python -m backend.ingestion --dry-run
 
 # Import new events using saved raw responses only.
-App/.venv/bin/python ingest.py new_tournaments.json --offline
+App/.venv/bin/python -m backend.ingestion --offline
 
 # Fetch every listed event anew and replace its database snapshot.
-App/.venv/bin/python ingest.py new_tournaments.json --refresh
+App/.venv/bin/python -m backend.ingestion --refresh
 ```
 
 `--refresh` and `--offline` are mutually exclusive. `--dry-run` can accompany
@@ -50,11 +51,12 @@ collection or `--timeout-ms 60000` for slower pages.
 ## Raw snapshots and manual overrides
 
 The pipeline is **raw JSON → Python transformation/validation → database**.
-Cleaned JSON is no longer needed for ingestion. `scrape.py` and the old cleaned
-export CLI remain available for debugging and existing plotting scripts.
+Cleaned JSON is no longer needed for ingestion. The cleaned-export CLI
+(`python -m backend.ingestion.cli`) remains available for reviewed exports,
+offline replacement, and metadata-only updates.
 
-New captures are timestamped under `output/snapshots/<slug>/`. Failed captures
-use `.failed.json`; they are never reused. Existing `output/<slug>.raw.json`
+New captures are timestamped under `App/backend/ingestion/output/snapshots/<slug>/`. Failed captures
+use `.failed.json`; they are never reused. Existing `App/backend/ingestion/output/<slug>.raw.json`
 files remain usable if they contain both required responses. The newest complete
 matching response is selected by capture time. A failed refresh never falls back
 to old data. Parser/schema changes can replay saved responses without fetching.
@@ -62,7 +64,7 @@ The normal command still skips existing events; use the existing explicit
 replacement CLI with a rebuilt export for offline replacement of an imported
 event.
 
-Every processed batch writes a JSON report under `output/reports/`, with the
+Every processed batch writes a JSON report under `App/backend/ingestion/output/reports/`, with the
 snapshot path, capture time, action, record counts, warnings, and failures.
 
 The manifest owns manual overrides. Timezone otherwise comes from source metadata
@@ -104,8 +106,8 @@ order from the repository root:
 
 ```bash
 App/.venv/bin/alembic -c App/alembic.ini upgrade 0003
-App/.venv/bin/python ingest.py --backfill --dry-run
-App/.venv/bin/python ingest.py --backfill
+App/.venv/bin/python -m backend.ingestion --backfill --dry-run
+App/.venv/bin/python -m backend.ingestion --backfill
 App/.venv/bin/alembic -c App/alembic.ini upgrade head
 ```
 

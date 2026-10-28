@@ -1,6 +1,6 @@
 # Database schema
 
-This schema supports TourneyX standings ingestion. See [INGESTION.md](INGESTION.md)
+This schema supports TourneyX standings ingestion. See [ingestion guide](App/backend/ingestion/README.md)
 for batch imports, raw snapshot replay, and the existing-data backfill.
 
 ## Tables

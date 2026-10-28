@@ -14,8 +14,8 @@ from backend.ingestion.importer import import_entries, import_export
 from backend.ingestion.source import CaptureSession, _build_export, _source_url, _write_json
 from backend.ingestion.validation import validate_export, timestamp
 
-ROOT = Path(__file__).resolve().parents[3]
-OUTPUT = ROOT / "output"
+INGESTION_ROOT = Path(__file__).resolve().parent
+OUTPUT = INGESTION_ROOT / "output"
 
 
 def read_manifest(path):
@@ -211,7 +211,7 @@ def run(entries, engine, *, output=OUTPUT, refresh=False, offline=False, dry_run
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("manifest", type=Path, nargs="?", default=ROOT / "new_tournaments.json")
+    parser.add_argument("manifest", type=Path, nargs="?", default=INGESTION_ROOT / "new_tournaments.json")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--refresh", action="store_true", help="Fetch and replace listed tournaments")
     mode.add_argument("--offline", action="store_true", help="Use saved raw snapshots exclusively")

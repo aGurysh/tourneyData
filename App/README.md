@@ -1,10 +1,10 @@
 # Tournament analytics app
 
-For streamlined collection and imports, see [Tournament ingestion](../INGESTION.md).
-Use `App/.venv/bin/python ingest.py new_tournaments.json` from the repository root.
+For streamlined collection and imports, see [Tournament ingestion](backend/ingestion/README.md).
+Use `App/.venv/bin/python -m backend.ingestion` from the repository root.
 
-This folder houses the backend and frontend. The existing scraper
-and plotting scripts stay at the repository root. The tables follow
+This folder houses the backend and frontend. Collection, manifests, and saved
+snapshots live in `backend/ingestion`. The tables follow
 [`../DB_SCHEMA.md`](../DB_SCHEMA.md), including the two tournament standings scores.
 
 ## Project layout
@@ -22,7 +22,13 @@ App/
 │   │   ├── session.py      # Database URL and engine configuration
 │   │   └── models.py       # SQLAlchemy table definitions
 │   └── ingestion/
-│       ├── cli.py          # Import arguments, output, and exit codes
+│       ├── __main__.py     # python -m backend.ingestion entry point
+│       ├── batch.py        # Manifest imports, snapshots, and reports
+│       ├── source.py       # TourneyX capture and transformation
+│       ├── new_tournaments.json # Current ingestion manifest
+│       ├── output/         # Ignored raw snapshots and reports
+│       ├── README.md       # Ingestion commands and setup
+│       ├── cli.py          # Optional reviewed-export import CLI
 │       ├── validation.py   # Cleaned-export validation and normalization
 │       └── importer.py     # Import previews and transactional writes
 ├── frontend/               # Reserved for the web UI and its own build config
@@ -57,7 +63,7 @@ docker compose up -d --wait db
 ```
 
 For an existing database with catches, follow the staged angler backfill in
-[INGESTION.md](../INGESTION.md) before upgrading past revision 0003.
+[ingestion guide](backend/ingestion/README.md) before upgrading past revision 0003.
 
 `upgrade head` creates the seven application tables and an `alembic_version` table
 that tracks the applied migration. Running it again is safe: applied migrations
@@ -175,27 +181,27 @@ UTC timestamp round trips. Without `TEST_DATABASE_URL`, database tests are skipp
 ## Import a reviewed JSON export
 
 Run from `App`. Use the cleaned, named-field `.json` written by the scraper,
-not `.raw.json` or the older positional-array catch caches. The scraper stays
-at the repository root and is independent of this command.
+not `.raw.json` or the older positional-array catch caches. This optional CLI
+is separate from the manifest-based batch command.
 
 First preview an import (reads the database, writes nothing):
 
 ```bash
-.venv/bin/python -m backend.ingestion.cli ../output/kawpa-allegheny-achigan-showdown.json
+.venv/bin/python -m backend.ingestion.cli backend/ingestion/output/kawpa-allegheny-achigan-showdown.json
 ```
 
 Review the cleaned JSON, the capture timestamp (`scraped_at`), waterbody names
 and boundaries, and any warnings. Then use the same command with `--apply`:
 
 ```bash
-.venv/bin/python -m backend.ingestion.cli ../output/kawpa-allegheny-achigan-showdown.json --apply
+.venv/bin/python -m backend.ingestion.cli backend/ingestion/output/kawpa-allegheny-achigan-showdown.json --apply
 ```
 
 Repeat with another export:
 
 ```bash
-.venv/bin/python -m backend.ingestion.cli ../output/kawpa-bass-on-the-bay-11.json
-.venv/bin/python -m backend.ingestion.cli ../output/kawpa-bass-on-the-bay-11.json --apply
+.venv/bin/python -m backend.ingestion.cli backend/ingestion/output/kawpa-bass-on-the-bay-11.json
+.venv/bin/python -m backend.ingestion.cli backend/ingestion/output/kawpa-bass-on-the-bay-11.json --apply
 ```
 
 The command validates the whole file before connecting. It rejects blocking
@@ -221,8 +227,8 @@ export, preserving all catch IDs, waterbody links, scores, and other metadata:
 
 ```bash
 .venv/bin/alembic upgrade head
-.venv/bin/python -m backend.ingestion.cli ../output/kawpa-allegheny-achigan-showdown.json --metadata-only
-.venv/bin/python -m backend.ingestion.cli ../output/kawpa-allegheny-achigan-showdown.json --metadata-only --apply
+.venv/bin/python -m backend.ingestion.cli backend/ingestion/output/kawpa-allegheny-achigan-showdown.json --metadata-only
+.venv/bin/python -m backend.ingestion.cli backend/ingestion/output/kawpa-allegheny-achigan-showdown.json --metadata-only --apply
 ```
 
 The patch requires an existing tournament with matching source identity,
@@ -236,8 +242,8 @@ duplicate inserts. To load a newer reviewed snapshot, preview and apply with
 `--replace`:
 
 ```bash
-.venv/bin/python -m backend.ingestion.cli ../output/kawpa-allegheny-achigan-showdown.json --replace
-.venv/bin/python -m backend.ingestion.cli ../output/kawpa-allegheny-achigan-showdown.json --replace --apply
+.venv/bin/python -m backend.ingestion.cli backend/ingestion/output/kawpa-allegheny-achigan-showdown.json --replace
+.venv/bin/python -m backend.ingestion.cli backend/ingestion/output/kawpa-allegheny-achigan-showdown.json --replace --apply
 ```
 
 Replacement keeps the tournament's database ID, updates its metadata/scores,
