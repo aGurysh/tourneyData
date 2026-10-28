@@ -88,13 +88,15 @@ test("filters species and includes catches exactly at the minimum length before 
     { ...sample("2026-07-01T12:30:00Z"), species: "Largemouth Bass", length: NaN },
   ]
   const filtered = (species, minimumLength) => records.filter((item) => matchesBiteWindowFilters(item, { species, minimumLength }))
-  assert.equal(filtered("both", 0).length, 4)
-  assert.equal(filtered("both", 15.25).length, 3)
+  assert.equal(filtered(null, 0).length, 6)
+  assert.equal(filtered(null, 15.25).length, 5)
+  assert.equal(filtered("Spotted Bass", 0).length, 1)
+  assert.equal(filtered("", 0).length, 1)
   assert.equal(filtered("Largemouth Bass", 15.25).length, 1)
   assert.deepEqual(buildBiteWindows(filtered("Smallmouth Bass", 15.25)).windows, [
     { startMinute: 420, count: 1 },
     { startMinute: 450, count: 0 },
     { startMinute: 480, count: 1 },
   ])
-  assert.deepEqual(buildBiteWindows(filtered("both", 25)).windows, [])
+  assert.deepEqual(buildBiteWindows(filtered(null, 25)).windows, [])
 })
