@@ -74,7 +74,7 @@ export default function TournamentSummaryCard({ tournamentId }: { tournamentId: 
               </div>
             </div>
             <div>
-              <dt className="text-muted-foreground">Species caught</dt>
+              <dt className="text-muted-foreground">Species breakdown</dt>
               <dd className="mt-2 flex flex-wrap gap-2 font-medium">
                 {tournament.species_caught.length === 0 ? "Not recorded" : tournament.species_caught.map((species) => (
                   <Badge

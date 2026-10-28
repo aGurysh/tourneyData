@@ -61,7 +61,7 @@ export default function TournamentBiteWindows({ tournamentId }: { tournamentId: 
             </p>
           ) : null}
           {excludedCount > 0 && (
-            <p className="text-xs text-muted-foreground">
+            <p className="test-sm text-muted-foreground">
               {excludedCount.toLocaleString()} {excludedCount === 1 ? "catch excluded because its time or timezone is invalid." : "catches excluded because their time or timezone is invalid."}
             </p>
           )}

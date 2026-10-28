@@ -76,16 +76,16 @@ export default function TournamentWeatherCard({ tournamentId }: { tournamentId: 
                 <dl className="grid grid-cols-2 gap-4 xl:grid-cols-4">
                   {summaries.map(({ label, icon: Icon, value }) => (
                     <div key={label} className="space-y-1 rounded-lg bg-muted/50 p-3">
-                      <dt className="flex items-center gap-2 text-xs text-muted-foreground"><Icon className="size-4 shrink-0" aria-hidden="true" />{label}</dt>
+                      <dt className="flex items-center gap-2 test-sm text-muted-foreground"><Icon className="size-4 shrink-0" aria-hidden="true" />{label}</dt>
                       <dd className="text-base font-semibold tabular-nums sm:text-lg">{value}</dd>
                     </div>
                   ))}
                 </dl>
-                <p className="text-xs text-muted-foreground sm:hidden">Scroll the table sideways to see all weather readings.</p>
+                <p className="test-sm text-muted-foreground sm:hidden">Scroll the table sideways to see all weather readings.</p>
                 <div role="region" aria-label="Hourly tournament weather" tabIndex={0} className="overflow-x-auto rounded-lg border focus-visible:outline-2 focus-visible:outline-ring">
                   <table className="w-full min-w-[560px] text-left text-sm tabular-nums">
                     <caption className="sr-only">Hourly weather on {date}. Times in {weather.timezone}. Wind directions indicate where the wind comes from. A dash means unavailable.</caption>
-                    <thead className="bg-muted/50 text-xs text-muted-foreground">
+                    <thead className="bg-muted/50 test-sm text-muted-foreground">
                       <tr>
                         <th scope="col" className="px-4 py-3 font-medium">Time ({zone})</th>
                         <th scope="col" className="px-4 py-3 font-medium">Temperature</th>
@@ -117,7 +117,7 @@ export default function TournamentWeatherCard({ tournamentId }: { tournamentId: 
         )}
       </CardContent>
       {weather && (
-        <CardFooter className="flex-wrap justify-between gap-2 text-xs text-muted-foreground">
+        <CardFooter className="flex-wrap justify-between gap-2 test-sm text-muted-foreground">
           <p>Estimated weather near tournament location</p>
           <a href="https://open-meteo.com/" target="_blank" rel="noreferrer" className="underline underline-offset-4 hover:text-foreground">{weather.attribution}</a>
         </CardFooter>
