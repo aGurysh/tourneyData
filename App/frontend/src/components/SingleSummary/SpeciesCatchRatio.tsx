@@ -5,7 +5,7 @@ export default function SpeciesCatchRatio({ counts }: { counts: TournamentDetail
   const total = counts.reduce((sum, item) => sum + item.catch_count, 0)
 
   if (total === 0) {
-    return <p className="mt-3 text-xs text-muted-foreground">No submitted catches recorded.</p>
+    return <p className="mt-3 test-sm text-muted-foreground">No submitted catches recorded.</p>
   }
 
   const segments = counts.filter((item) => item.catch_count > 0).map((item) => ({
@@ -36,15 +36,15 @@ export default function SpeciesCatchRatio({ counts }: { counts: TournamentDetail
           />
         ))}
       </div>
-      <div className="flex flex-wrap justify-between gap-x-4 gap-y-1 text-xs text-muted-foreground">
+      <div className="flex flex-wrap justify-between gap-x-4 gap-y-1 test-sm text-muted-foreground">
         {segments.map((segment) => (
           <div key={segment.name} className="space-y-1">
             <p>{segment.name}: {segment.count.toLocaleString()} ({segment.percent.toFixed(1)}%)</p>
-            <p>Average length: <span className="font-medium text-foreground">{segment.averageLength} inches</span></p>
+            <p>Average length: <span className="font-medium ftext-foreground">{segment.averageLength} inches</span></p>
           </div>
         ))}
       </div>
-      <p className="text-xs text-muted-foreground">{total.toLocaleString()} submitted catches</p>
+      <p className="test-sm text-muted-foreground">{total.toLocaleString()} submitted catches</p>
     </div>
   )
 }

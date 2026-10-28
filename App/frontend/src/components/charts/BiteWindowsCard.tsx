@@ -69,8 +69,7 @@ export default function BiteWindowsCard({ windows, timeLabel, status, filters, s
               </PopoverTrigger>
               <PopoverContent align="end" className="max-w-[calc(100vw-2rem)] gap-4 p-4">
                 <PopoverHeader>
-                  <PopoverTitle>Bite window settings</PopoverTitle>
-                  <PopoverDescription>Filter bite window data</PopoverDescription>
+                  <PopoverTitle>Filter Bite Window Data</PopoverTitle>
                 </PopoverHeader>
                 <div className="grid gap-2">
                   <Label htmlFor={speciesId}>Species</Label>
@@ -104,7 +103,7 @@ export default function BiteWindowsCard({ windows, timeLabel, status, filters, s
       </CardHeader>
       <CardContent className="space-y-3">
         {filters && (
-          <p className="text-xs text-muted-foreground" aria-live="polite">
+          <p className="test-sm text-muted-foreground" aria-live="polite">
             {filters.species === null ? "All species" : filters.species || "Unknown species"} · {filters.minimumLength > 0 ? `${filters.minimumLength}″ minimum` : "No minimum length"}
           </p>
         )}
@@ -113,7 +112,7 @@ export default function BiteWindowsCard({ windows, timeLabel, status, filters, s
           emptyMessage && <p className="text-muted-foreground">{emptyMessage}</p>
         ) : (
           <>
-            <p className="text-xs text-muted-foreground">{total.toLocaleString()} catches</p>
+            <p className="test-sm text-muted-foreground">{total.toLocaleString()} catches</p>
             <div ref={chartRef} className="w-full min-w-0" role="region" aria-label="Bite windows chart">
               <svg className="block w-full" height={height} viewBox={`0 0 ${width} ${height}`} role="group" aria-label="Catch counts by half-hour window">
                 <text x={left} y={10} className="fill-muted-foreground text-[10px]">Catches</text>
@@ -157,7 +156,7 @@ export default function BiteWindowsCard({ windows, timeLabel, status, filters, s
                 <text x={left + plotWidth / 2} y={height - 8} textAnchor="middle" className="fill-muted-foreground text-[11px]">Time of day · {timeLabel}</text>
               </svg>
             </div>
-            <p className="min-h-4 text-xs text-muted-foreground" aria-live="polite">
+            <p className="min-h-4 test-sm text-muted-foreground" aria-live="polite">
               {active ? describeBiteWindow(active) : "Hover, focus, or tap a bar for its window and catch count."}
             </p>
           </>

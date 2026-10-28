@@ -86,7 +86,7 @@ export default function EstimatedStandingsChart({ anglers, selected, start, end,
         ))}
         <text x={(left + right) / 2} y={302} textAnchor="middle" className="fill-muted-foreground text-[11px]">Time · {timeZone}</text>
       </svg>
-      <p className="min-h-5 text-xs text-muted-foreground" aria-live="polite">
+      <p className="min-h-5 test-sm text-muted-foreground" aria-live="polite">
         {active ? `${formatter.format(active.time)} · ${activeAngler!.name}: ${catchDetails(active)}` : "Hover, focus, or tap a highlighted catch to see its fish length and estimated place after the catch."}
       </p>
     </div>
