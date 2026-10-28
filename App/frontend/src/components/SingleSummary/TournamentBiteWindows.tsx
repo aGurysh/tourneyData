@@ -38,7 +38,7 @@ export default function TournamentBiteWindows({ tournamentId }: { tournamentId: 
       filters={filters}
       speciesOptions={speciesOptions}
       onFiltersChange={setFilters}
-      timeLabel={timeZone ?? "tournament local time"}
+      timeLabel={"local tournament time"}
       emptyMessage={tournamentId === null
         ? "Select a tournament to view bite windows."
         : loading || (failed && !ready) ? "" : "No catches match these filters with usable times. Try All species or a lower minimum length."}
