@@ -9,7 +9,7 @@ export interface BiteWindow {
 }
 
 export interface BiteWindowFilters {
-  species: "both" | "Largemouth Bass" | "Smallmouth Bass"
+  species: string | null
   minimumLength: number
 }
 
@@ -17,9 +17,7 @@ export function matchesBiteWindowFilters(
   sample: { species: string | null; length: number },
   filters: BiteWindowFilters,
 ) {
-  const speciesMatches = filters.species === "both"
-    ? sample.species === "Largemouth Bass" || sample.species === "Smallmouth Bass"
-    : sample.species === filters.species
+  const speciesMatches = filters.species === null || (sample.species ?? "") === filters.species
   return speciesMatches && Number.isFinite(sample.length) && sample.length >= filters.minimumLength
 }
 

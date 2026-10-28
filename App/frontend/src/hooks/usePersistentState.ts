@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 
 // Persist UI pereferences 
-// API responses are persisted by TanStack Query
+// API response data are persisted by TanStack Query
 export function usePersistentState<T extends string>(
   key: string,
   defaultValue: T,

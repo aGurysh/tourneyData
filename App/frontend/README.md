@@ -39,8 +39,10 @@ retaining empty bins between the first and last populated bins. Each bin include
 its start and excludes its end (7:30 belongs to 7:30–8:00). Invalid timestamps or
 timezones are excluded and counted. The single-summary adapter supplies the
 tournament timezone; future aggregations can supply each catch's local timezone.
-Future species/length filters can operate on the fetched catch records before
-binning without changing the chart or refetching the unfiltered dataset.
+Species and minimum-length filters operate on the fetched catch records before
+binning. Species options come from the tournament's unfiltered catches, with
+All species including catches with unknown species. Unknown species is also
+available as an option when present. Filtering does not refetch the dataset.
 
 Run cache behavior checks with `npm test` using Node.js 22.18+ (native TypeScript
 support). Run `npm run build` for TypeScript and production-bundle checks.

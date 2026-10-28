@@ -16,12 +16,13 @@ interface BiteWindowsCardProps {
   status?: ReactNode
   emptyMessage?: string
   filters?: BiteWindowFilters
+  speciesOptions?: readonly string[]
   onFiltersChange?: (filters: BiteWindowFilters) => void
 }
 
 // Presentation only: accepts counts from any dataset, including filtered or
 // aggregated catches. Data acquisition and binning belong to the caller.
-export default function BiteWindowsCard({ windows, timeLabel, status, filters, onFiltersChange, emptyMessage = "No catches to display." }: BiteWindowsCardProps) {
+export default function BiteWindowsCard({ windows, timeLabel, status, filters, speciesOptions = [], onFiltersChange, emptyMessage = "No catches to display." }: BiteWindowsCardProps) {
   const titleId = useId()
   const speciesId = useId()
   const lengthId = useId()
@@ -73,11 +74,12 @@ export default function BiteWindowsCard({ windows, timeLabel, status, filters, o
                 </PopoverHeader>
                 <div className="grid gap-2">
                   <Label htmlFor={speciesId}>Species</Label>
-                  <NativeSelect id={speciesId} className="w-full" value={filters.species}
-                    onChange={(event) => onFiltersChange({ ...filters, species: event.target.value as BiteWindowFilters["species"] })}>
-                    <NativeSelectOption value="both">Both</NativeSelectOption>
-                    <NativeSelectOption value="Largemouth Bass">Largemouth</NativeSelectOption>
-                    <NativeSelectOption value="Smallmouth Bass">Smallmouth</NativeSelectOption>
+                  <NativeSelect id={speciesId} className="w-full" value={filters.species === null ? "all" : `species:${filters.species}`}
+                    onChange={(event) => onFiltersChange({ ...filters, species: event.target.value === "all" ? null : event.target.value.slice("species:".length) })}>
+                    <NativeSelectOption value="all">All species</NativeSelectOption>
+                    {speciesOptions.map((species) => (
+                      <NativeSelectOption key={species} value={`species:${species}`}>{species || "Unknown species"}</NativeSelectOption>
+                    ))}
                   </NativeSelect>
                 </div>
                 <div className="grid gap-2">
@@ -91,8 +93,8 @@ export default function BiteWindowsCard({ windows, timeLabel, status, filters, o
                       }
                     }} />
                 </div>
-                <Button variant="outline" size="sm" disabled={filters.species === "both" && filters.minimumLength === 0}
-                  onClick={() => onFiltersChange({ species: "both", minimumLength: 0 })}>
+                <Button variant="outline" size="sm" disabled={filters.species === null && filters.minimumLength === 0}
+                  onClick={() => onFiltersChange({ species: null, minimumLength: 0 })}>
                   Reset filters
                 </Button>
               </PopoverContent>
@@ -103,7 +105,7 @@ export default function BiteWindowsCard({ windows, timeLabel, status, filters, o
       <CardContent className="space-y-3">
         {filters && (
           <p className="text-xs text-muted-foreground" aria-live="polite">
-            {filters.species === "both" ? "Largemouth + Smallmouth" : filters.species.replace(" Bass", "")} · {filters.minimumLength > 0 ? `${filters.minimumLength}″ minimum` : "No minimum length"}
+            {filters.species === null ? "All species" : filters.species || "Unknown species"} · {filters.minimumLength > 0 ? `${filters.minimumLength}″ minimum` : "No minimum length"}
           </p>
         )}
         {status}

@@ -7,9 +7,16 @@ import { buildBiteWindows, matchesBiteWindowFilters } from "@/lib/biteWindows"
 import type { BiteWindowFilters } from "@/lib/biteWindows"
 
 export default function TournamentBiteWindows({ tournamentId }: { tournamentId: number | null }) {
-  const [filters, setFilters] = useState<BiteWindowFilters>({ species: "both", minimumLength: 0 })
+  const [selectedFilters, setFilters] = useState<BiteWindowFilters>({ species: null, minimumLength: 0 })
   const detailQuery = useQuery(tournamentQueries.detail(tournamentId))
   const catchesQuery = useQuery(tournamentQueries.catches(tournamentId))
+  const speciesOptions = useMemo(() => [...new Set(
+    (catchesQuery.data ?? []).map((item) => item.species_name ?? ""),
+  )].sort((a, b) => a.localeCompare(b)), [catchesQuery.data])
+  // A species selected for another tournament may not occur in this one.
+  const filters = useMemo(() => selectedFilters.species !== null && !speciesOptions.includes(selectedFilters.species)
+    ? { ...selectedFilters, species: null }
+    : selectedFilters, [selectedFilters, speciesOptions])
   const timeZone = detailQuery.data?.timezone
   const { windows, excludedCount } = useMemo(() => buildBiteWindows(
     timeZone ? (catchesQuery.data ?? []).filter((item) => matchesBiteWindowFilters({
@@ -29,11 +36,12 @@ export default function TournamentBiteWindows({ tournamentId }: { tournamentId: 
     <BiteWindowsCard
       windows={windows}
       filters={filters}
+      speciesOptions={speciesOptions}
       onFiltersChange={setFilters}
       timeLabel={timeZone ?? "tournament local time"}
       emptyMessage={tournamentId === null
         ? "Select a tournament to view bite windows."
-        : loading || (failed && !ready) ? "" : "No catches match these filters with usable times. Try Both species or a lower minimum length."}
+        : loading || (failed && !ready) ? "" : "No catches match these filters with usable times. Try All species or a lower minimum length."}
       status={tournamentId !== null && (
         <>
           {failed ? (
