@@ -3,13 +3,13 @@ import type { Query } from "@tanstack/react-query"
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister"
 import { removeOldestQuery } from "@tanstack/react-query-persist-client"
 
-export const CACHE_MAX_AGE = 24 * 60 * 60 * 1000
+export const CACHE_MAX_AGE = 24 * 60 * 60 * 1000 // 24hr
 
 export function createQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 5 * 60 * 1000,
+        staleTime: "static", // db modified infrequently, just gc after 24h
         gcTime: CACHE_MAX_AGE,
         retry: 1,
       },
