@@ -1,7 +1,24 @@
 # Frontend
 
-Run `npm install` and `npm run dev` from this directory. Start the backend
-on port 8000; Vite proxies `/api` requests to `http://localhost:8000`.
+Use Node **24.18.0** (pinned in `.nvmrc`) and npm **11.16.0** (pinned in
+`package.json`). From this directory, select Node with your version manager
+(`nvm install` and `nvm use` if using nvm), then check `node --version` and
+`npm --version`. If needed, install the matching npm with
+`npm install --global npm@11.16.0`.
+
+```bash
+npm ci
+npm run dev
+```
+
+`npm ci` installs the exact versions in `package-lock.json` and fails if it
+disagrees with `package.json`. `.npmrc` enforces the Node/npm versions declared
+in `engines`. Use `npm install PACKAGE` or `npm update PACKAGE` for intentional
+dependency updates, run tests/build, and commit both package files. Change
+`.nvmrc` and the `engines`/`packageManager` fields together for runtime updates.
+
+Start the backend on port 8000; Vite proxies `/api` requests to
+`http://localhost:8000`.
 
 API helpers live in `src/api`. The tournament selector loads all pages from
 `GET /tournaments`, ordered by the backend (newest tournament first).
@@ -44,6 +61,6 @@ binning. Species options come from the tournament's unfiltered catches, with
 All species including catches with unknown species. Unknown species is also
 available as an option when present. Filtering does not refetch the dataset.
 
-Run cache behavior checks with `npm test` using Node.js 22.18+ (native TypeScript
-support). Run `npm run build` for TypeScript and production-bundle checks.
+Run cache behavior checks with `npm test` using the pinned Node version (native
+TypeScript support). Run `npm run build` for TypeScript and production-bundle checks.
 

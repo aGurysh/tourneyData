@@ -1,12 +1,12 @@
 [build-system]
-requires = ["setuptools>=75"]
+requires = ["setuptools==80.9.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "tourney-analytics-backend"
 version = "0.1.0"
 description = "Database foundation for the fishing tournament analytics app"
-requires-python = ">=3.12"
+requires-python = ">=3.12,<3.13"
 dependencies = [
     "SQLAlchemy>=2.0,<2.1",
     "alembic>=1.16,<2",
@@ -21,6 +21,9 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8,<10"]
+
+[tool.uv]
+required-version = "==0.13.6"
 
 [tool.setuptools.packages.find]
 include = ["backend*"]
