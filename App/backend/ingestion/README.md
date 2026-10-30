@@ -92,7 +92,7 @@ individual culled fish unavailable in the source cannot be recovered by replay.
 ## Environment setup
 
 Use the backend environment for the whole pipeline. Install the pinned uv version
-as described in the [app setup guide](../../README.md), then from the repository root:
+as described in the [backend setup guide](../README.md), then from the repository root:
 
 ```bash
 uv sync --project App --locked --extra dev
