@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
-import { Popover, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle, PopoverTrigger } from "@/components/ui/popover"
+import { Popover, PopoverContent, PopoverHeader, PopoverTitle, PopoverTrigger } from "@/components/ui/popover"
 import { describeBiteWindow, formatWindowTime } from "@/lib/biteWindows"
 import type { BiteWindow, BiteWindowFilters } from "@/lib/biteWindows"
 
@@ -20,8 +20,6 @@ interface BiteWindowsCardProps {
   onFiltersChange?: (filters: BiteWindowFilters) => void
 }
 
-// Presentation only: accepts counts from any dataset, including filtered or
-// aggregated catches. Data acquisition and binning belong to the caller.
 export default function BiteWindowsCard({ windows, timeLabel, status, filters, speciesOptions = [], onFiltersChange, emptyMessage = "No catches to display." }: BiteWindowsCardProps) {
   const titleId = useId()
   const speciesId = useId()
