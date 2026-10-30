@@ -306,20 +306,20 @@ Keep PostgreSQL running. Visit [interactive API documentation](http://localhost:
 to try the endpoints, or fetch [the tournament list](http://localhost:8000/tournaments).
 The machine-readable OpenAPI document is at `/openapi.json`.
 
-| Endpoint | Response |
-| --- | --- |
-| `GET /health` | `{"status":"ok"}` when PostgreSQL is reachable; otherwise HTTP 503. |
-| `GET /tournaments` | Tournament metadata, catch counts, and winning/top-10% scores. Optional `location_id` filter. |
-| `GET /tournaments/{id}` | Tournament metadata, catch count, and eligible waterbodies with boundary notes. |
-| `GET /tournaments/{id}/catches` | Catches with nullable species ID/name. Optional `species_id` and `angler_name` filters. |
-| `GET /tournaments/{id}/weather` | Historical hourly weather during the tournament's saved start/end times. |
-| `GET /locations` | Waterbody IDs, names, and states. |
+| Endpoint                        | Response                                                                                      |
+| ------------------------------- | --------------------------------------------------------------------------------------------- |
+| `GET /health`                   | `{"status":"ok"}` when PostgreSQL is reachable; otherwise HTTP 503.                           |
+| `GET /tournaments`              | Tournament metadata, catch counts, and winning/top-10% scores. Optional `location_id` filter. |
+| `GET /tournaments/{id}`         | Tournament metadata, catch count, and eligible waterbodies with boundary notes.               |
+| `GET /tournaments/{id}/catches` | Catches with nullable species ID/name. Optional `species_id` and `angler_name` filters.       |
+| `GET /tournaments/{id}/weather` | Historical hourly weather during the tournament's saved start/end times.                      |
+| `GET /locations`                | Waterbody IDs, names, and states.                                                             |
 
 All collection endpoints accept `limit` (default 50, range 1–200) and `offset`
 (default 0, nonnegative). Responses use this envelope:
 
 ```json
-{"items": [], "total": 0, "limit": 50, "offset": 0}
+{ "items": [], "total": 0, "limit": 50, "offset": 0 }
 ```
 
 `total` counts every matching row before pagination. Tournament ordering is date
@@ -367,13 +367,13 @@ all returned timestamps include `Z` for UTC.
 
 Each `hourly` row contains:
 
-| Field | Meaning/unit |
-| --- | --- |
-| `time` | UTC ISO timestamp |
-| `temperature_f` | Air temperature at 2 m, degrees Fahrenheit |
-| `pressure_hpa` | Sea-level pressure, hPa |
-| `cloud_cover_percent` | Total cloud cover, 0–100% |
-| `wind_speed_mph` | Wind speed at 10 m, miles per hour |
+| Field                    | Meaning/unit                                                |
+| ------------------------ | ----------------------------------------------------------- |
+| `time`                   | UTC ISO timestamp                                           |
+| `temperature_f`          | Air temperature at 2 m, degrees Fahrenheit                  |
+| `pressure_hpa`           | Sea-level pressure, hPa                                     |
+| `cloud_cover_percent`    | Total cloud cover, 0–100%                                   |
+| `wind_speed_mph`         | Wind speed at 10 m, miles per hour                          |
 | `wind_direction_degrees` | Direction the wind comes from, degrees clockwise from north |
 
 The response includes `tournament_id`, `starts_at`, `ends_at`,
@@ -386,8 +386,7 @@ requires an appropriate [Open-Meteo plan](https://open-meteo.com/en/pricing).
 
 Missing measurements remain null. `coverage` is `complete` if every expected
 hour and measurement within the interval is present, otherwise `partial`.
-No usable measurements, or a tournament that has not ended yet, returns HTTP
-503. Unknown tournaments return 404; missing coordinates/duration returns 409.
+No usable measurements, or a tournament that has not ended yet, returns HTTP 503. Unknown tournaments return 404; missing coordinates/duration returns 409.
 Provider failures/invalid responses return 502; timeouts return 504.
 
 Successful requests are cached in memory per worker by requested coordinates
