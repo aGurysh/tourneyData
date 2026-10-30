@@ -210,6 +210,28 @@ Tests cover upgrade/downgrade/re-upgrade, model/migration agreement, uniqueness,
 foreign keys, multi-water events, indexes, invalid lengths, exact decimals, and
 UTC timestamp round trips. Without `TEST_DATABASE_URL`, database tests are skipped.
 
+## Continuous integration
+
+The [CI workflow](../.github/workflows/ci.yml) runs on pull requests, pushes to
+`main`, and manual runs from GitHub's Actions tab. It provides two checks:
+
+- **Frontend tests and build** installs the pinned Node/npm versions, runs
+  `npm ci`, then `npm test` and `npm run build`.
+- **Backend tests with PostgreSQL** installs the pinned Python/uv versions,
+  runs `uv sync --locked --extra dev`, then runs the full pytest suite against a
+  fresh PostgreSQL 18 service container.
+
+The test database exists only for that backend job. Its credentials are local
+test values in the workflow; no repository secrets or hosted database are needed.
+Both database URL variables point to this disposable database. The fixtures apply
+migrations to an isolated schema and create their own test data, so CI needs no
+production data, ingestion run, or separate migration step. GitHub removes the
+service container when the job ends. New commits cancel older runs for the same PR.
+
+Commit and push the workflow with your changes to see the checks on the PR.
+You can require both named checks before merging in the repository's branch
+protection/ruleset settings, if that feature is available for your repository.
+
 ## Import a reviewed JSON export
 
 Run from `App`. Use the cleaned, named-field `.json` written by the scraper,

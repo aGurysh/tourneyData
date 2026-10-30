@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend tests and build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: App/frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version-file: App/frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: App/frontend/package-lock.json
+      - name: Install pinned npm
+        run: npm install --global "$(node -p 'require("./package.json").packageManager')"
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Run frontend tests
+        run: npm test
+      - name: Build frontend
+        run: npm run build
+
+  backend:
+    name: Backend tests with PostgreSQL
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: App
+    env:
+      # These credentials belong only to the disposable CI database.
+      TEST_DATABASE_URL: postgresql+psycopg://tourney_test:tourney_ci_only@localhost:5432/tourney_test
+      DATABASE_URL: postgresql+psycopg://tourney_test:tourney_ci_only@localhost:5432/tourney_test
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: tourney_test
+          POSTGRES_PASSWORD: tourney_ci_only
+          POSTGRES_DB: tourney_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tourney_test -d tourney_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version-file: App/.python-version
+      - uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9 # v7
+        with:
+          version: "0.13.6"
+          enable-cache: true
+          cache-dependency-glob: App/uv.lock
+      - name: Install locked dependencies
+        run: uv sync --locked --extra dev
+      - name: Run backend tests, including migrations and database integration
+        run: .venv/bin/python -m pytest -q
