@@ -1,13 +1,13 @@
-# Tournament analytics app
+# Backend
 
-For streamlined collection and imports, see [Tournament ingestion](backend/ingestion/README.md).
-Use `App/.venv/bin/python -m backend.ingestion` from the repository root.
+FastAPI, PostgreSQL, and TourneyX ingestion for the
+[tournament analytics app](../../README.md). The tables follow the
+[database schema](../../DB_SCHEMA.md).
 
-This folder houses the backend and frontend. Collection, manifests, and saved
-snapshots live in `backend/ingestion`. The tables follow
-[`../DB_SCHEMA.md`](../DB_SCHEMA.md), including the two tournament standings scores.
+All paths and commands below are relative to `App` unless stated otherwise.
+The Python environment, migrations, tests, and Compose configuration live there.
 
-## Project layout
+## Backend layout
 
 ```text
 App/
@@ -31,7 +31,7 @@ App/
 │       ├── cli.py          # Optional reviewed-export import CLI
 │       ├── validation.py   # Cleaned-export validation and normalization
 │       └── importer.py     # Import previews and transactional writes
-├── frontend/               # Reserved for the web UI and its own build config
+├── frontend/               # React/Vite web UI and its own build config
 ├── migrations/             # Versioned Alembic schema changes
 ├── tests/
 │   ├── conftest.py         # Shared isolated PostgreSQL fixtures
@@ -43,16 +43,14 @@ App/
 └── compose.yaml
 ```
 
-Run backend commands from `App`. The frontend will keep its own `package.json`
-and build configuration inside `frontend/`. Scraping remains separate: capture
-and review a cleaned JSON export, preview its import, then apply it explicitly.
+Run backend commands from `App`. The frontend has its own `package.json`
+and build configuration inside `frontend/`. See the [ingestion guide](ingestion/README.md) for collection and manifest imports.
+The reviewed-export CLI below supports previewing imports before applying them.
 
 ## Start locally
 
 The pinned tools are Python **3.12.3** (`.python-version`), uv **0.13.6**
-(`pyproject.toml`), Node **24.18.0** (`frontend/.nvmrc`), and npm **11.16.0**
-(`frontend/package.json`). These match the existing Python, Node, and npm
-environment. Docker with Docker Compose is needed for the local database.
+(`pyproject.toml`). Docker with Docker Compose is needed for the local database.
 
 Install the pinned uv release if needed (see the
 [uv installation guide](https://docs.astral.sh/uv/getting-started/installation/)):
@@ -61,7 +59,7 @@ Install the pinned uv release if needed (see the
 curl -LsSf https://astral.sh/uv/0.13.6/install.sh | sh
 ```
 
-Then run these commands from this folder. uv uses `.python-version` and creates
+Then run these commands from the repository root. uv uses `.python-version` and creates
 `App/.venv`; it downloads that Python version if it is not already available:
 
 ```bash
@@ -74,7 +72,7 @@ docker compose up -d --wait db
 ```
 
 For an existing database with catches, follow the staged angler backfill in
-[ingestion guide](backend/ingestion/README.md) before upgrading past revision 0003.
+[ingestion guide](ingestion/README.md) before upgrading past revision 0003.
 
 `upgrade head` creates the seven application tables and an `alembic_version` table
 that tracks the applied migration. Running it again is safe: applied migrations
@@ -93,7 +91,7 @@ variables override `.env`. Keep `.env` out of Git; `.env.example` is the templat
 
 ## Dependency installs and updates
 
-Commit `uv.lock` and `frontend/package-lock.json`. Python dependency ranges in
+Commit `App/uv.lock`. Python dependency ranges in
 `pyproject.toml` describe allowed updates; `uv.lock` records exact direct and
 transitive versions and distribution hashes. The build backend is pinned too.
 
@@ -109,7 +107,7 @@ For intentional Python updates, edit `pyproject.toml` if needed, run `uv lock`
 together. Update `.python-version` deliberately when changing the Python runtime;
 the supported Python minor version is declared in `requires-python`.
 
-For frontend setup and updates, see [the frontend guide](frontend/README.md).
+For frontend setup and updates, see [the frontend guide](../frontend/README.md).
 Install with `npm ci`; reserve `npm install` for intentional dependency changes.
 
 ## How the pieces fit together
@@ -209,28 +207,6 @@ TEST_DATABASE_URL=postgresql+psycopg://tourney:tourney_local@localhost:5432/tour
 Tests cover upgrade/downgrade/re-upgrade, model/migration agreement, uniqueness,
 foreign keys, multi-water events, indexes, invalid lengths, exact decimals, and
 UTC timestamp round trips. Without `TEST_DATABASE_URL`, database tests are skipped.
-
-## Continuous integration
-
-The [CI workflow](../.github/workflows/ci.yml) runs on pull requests, pushes to
-`main`, and manual runs from GitHub's Actions tab. It provides two checks:
-
-- **Frontend tests and build** installs the pinned Node/npm versions, runs
-  `npm ci`, then `npm test` and `npm run build`.
-- **Backend tests with PostgreSQL** installs the pinned Python/uv versions,
-  runs `uv sync --locked --extra dev`, then runs the full pytest suite against a
-  fresh PostgreSQL 18 service container.
-
-The test database exists only for that backend job. Its credentials are local
-test values in the workflow; no repository secrets or hosted database are needed.
-Both database URL variables point to this disposable database. The fixtures apply
-migrations to an isolated schema and create their own test data, so CI needs no
-production data, ingestion run, or separate migration step. GitHub removes the
-service container when the job ends. New commits cancel older runs for the same PR.
-
-Commit and push the workflow with your changes to see the checks on the PR.
-You can require both named checks before merging in the repository's branch
-protection/ruleset settings, if that feature is available for your repository.
 
 ## Import a reviewed JSON export
 
