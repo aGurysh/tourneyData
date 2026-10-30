@@ -2,13 +2,17 @@
 
 From the repository root, put tournament URLs in `App/backend/ingestion/new_tournaments.json`:
 
+The entry below maps a tournament water body to an existing location.
+To add entries for a water body not yet in db, use the following format
+
+`"locations": [{ "name": "Lake X", "state": "PA" }]`
+
 ```json
 [
-  "https://tourneyx.com/leaderboard/standings/your-tournament-slug",
   {
     "url": "https://tourneyx.com/leaderboard/standings/another-tournament-slug",
     "timezone": "America/New_York",
-    "locations": [{"id": 3, "boundary_notes": "Eligible section"}]
+    "locations": [{ "id": 3, "boundary_notes": "Eligible section" }]
   }
 ]
 ```
