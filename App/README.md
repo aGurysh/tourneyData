@@ -49,13 +49,24 @@ and review a cleaned JSON export, preview its import, then apply it explicitly.
 
 ## Start locally
 
-Requirements: Python 3.12+ and Docker with Docker Compose. Run these commands from
-this folder:
+The pinned tools are Python **3.12.3** (`.python-version`), uv **0.13.6**
+(`pyproject.toml`), Node **24.18.0** (`frontend/.nvmrc`), and npm **11.16.0**
+(`frontend/package.json`). These match the existing Python, Node, and npm
+environment. Docker with Docker Compose is needed for the local database.
+
+Install the pinned uv release if needed (see the
+[uv installation guide](https://docs.astral.sh/uv/getting-started/installation/)):
+
+```bash
+curl -LsSf https://astral.sh/uv/0.13.6/install.sh | sh
+```
+
+Then run these commands from this folder. uv uses `.python-version` and creates
+`App/.venv`; it downloads that Python version if it is not already available:
 
 ```bash
 cd App
-python3 -m venv .venv
-.venv/bin/python -m pip install -e '.[dev]'
+uv sync --locked --extra dev
 cp .env.example .env
 docker compose up -d --wait db
 .venv/bin/alembic upgrade head
@@ -79,6 +90,27 @@ credentials in `DATABASE_URL`.
 If you already have PostgreSQL, set `DATABASE_URL` to its connection URL using the
 `postgresql+psycopg://` driver and skip the Docker command. Shell environment
 variables override `.env`. Keep `.env` out of Git; `.env.example` is the template.
+
+## Dependency installs and updates
+
+Commit `uv.lock` and `frontend/package-lock.json`. Python dependency ranges in
+`pyproject.toml` describe allowed updates; `uv.lock` records exact direct and
+transitive versions and distribution hashes. The build backend is pinned too.
+
+From `App`, use `uv sync --locked --extra dev` for development/tests or
+`uv sync --locked --no-dev` for runtime dependencies only. `--locked` rejects a
+lockfile that does not match `pyproject.toml` instead of updating it. uv installs
+the backend as editable, so existing `.venv/bin/...` commands still work.
+Sync removes packages outside the selected dependency set from `.venv`.
+
+For intentional Python updates, edit `pyproject.toml` if needed, run `uv lock`
+(or `uv lock --upgrade-package PACKAGE` to update an existing dependency), then
+`uv sync --locked --extra dev` and run the tests. Commit the manifest and lockfile
+together. Update `.python-version` deliberately when changing the Python runtime;
+the supported Python minor version is declared in `requires-python`.
+
+For frontend setup and updates, see [the frontend guide](frontend/README.md).
+Install with `npm ci`; reserve `npm install` for intentional dependency changes.
 
 ## How the pieces fit together
 
@@ -266,7 +298,7 @@ Exit codes: `0` successful preview/import; `2` file validation or review conflic
 From `App`, install/update the dependencies and start the development server:
 
 ```bash
-.venv/bin/python -m pip install -e '.[dev]'
+uv sync --locked --extra dev
 .venv/bin/uvicorn backend.main:app --reload
 ```
 
