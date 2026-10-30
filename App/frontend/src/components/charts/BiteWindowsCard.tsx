@@ -1,12 +1,10 @@
 import { useEffect, useId, useRef, useState } from "react"
 import type { ReactNode } from "react"
-import { Settings2 } from "lucide-react"
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
-import { Popover, PopoverContent, PopoverHeader, PopoverTitle, PopoverTrigger } from "@/components/ui/popover"
 import { describeBiteWindow, formatWindowTime } from "@/lib/biteWindows"
 import type { BiteWindow, BiteWindowFilters } from "@/lib/biteWindows"
 
@@ -59,51 +57,36 @@ export default function BiteWindowsCard({ windows, timeLabel, status, filters, s
       <CardHeader>
         <CardTitle><h2 id={titleId}>Bite Windows</h2></CardTitle>
         <CardDescription>Catches in 30-minute windows · {timeLabel}</CardDescription>
-        {filters && onFiltersChange && (
-          <CardAction>
-            <Popover>
-              <PopoverTrigger render={<Button variant="outline" size="sm" aria-label="Bite window settings" />}>
-                <Settings2 aria-hidden="true" /> Settings
-              </PopoverTrigger>
-              <PopoverContent align="end" className="max-w-[calc(100vw-2rem)] gap-4 p-4">
-                <PopoverHeader>
-                  <PopoverTitle>Filter Bite Window Data</PopoverTitle>
-                </PopoverHeader>
-                <div className="grid gap-2">
-                  <Label htmlFor={speciesId}>Species</Label>
-                  <NativeSelect id={speciesId} className="w-full" value={filters.species === null ? "all" : `species:${filters.species}`}
-                    onChange={(event) => onFiltersChange({ ...filters, species: event.target.value === "all" ? null : event.target.value.slice("species:".length) })}>
-                    <NativeSelectOption value="all">All species</NativeSelectOption>
-                    {speciesOptions.map((species) => (
-                      <NativeSelectOption key={species} value={`species:${species}`}>{species || "Unknown species"}</NativeSelectOption>
-                    ))}
-                  </NativeSelect>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor={lengthId}>Minimum length (inches)</Label>
-                  <Input id={lengthId} type="number" min={0} step="any" placeholder="No minimum"
-                    value={filters.minimumLength || ""}
-                    onChange={(event) => {
-                      const minimumLength = Number(event.target.value)
-                      if (Number.isFinite(minimumLength) && minimumLength >= 0) {
-                        onFiltersChange({ ...filters, minimumLength })
-                      }
-                    }} />
-                </div>
-                <Button variant="outline" size="sm" disabled={filters.species === null && filters.minimumLength === 0}
-                  onClick={() => onFiltersChange({ species: null, minimumLength: 0 })}>
-                  Reset filters
-                </Button>
-              </PopoverContent>
-            </Popover>
-          </CardAction>
-        )}
       </CardHeader>
       <CardContent className="space-y-3">
-        {filters && (
-          <p className="test-sm text-muted-foreground" aria-live="polite">
-            {filters.species === null ? "All species" : filters.species || "Unknown species"} · {filters.minimumLength > 0 ? `${filters.minimumLength}″ minimum` : "No minimum length"}
-          </p>
+        {filters && onFiltersChange && (
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="grid min-w-0 max-w-full gap-2">
+              <Label htmlFor={speciesId}>Species</Label>
+              <NativeSelect id={speciesId} className="w-full" value={filters.species === null ? "all" : `species:${filters.species}`}
+                onChange={(event) => onFiltersChange({ ...filters, species: event.target.value === "all" ? null : event.target.value.slice("species:".length) })}>
+                <NativeSelectOption value="all">All species</NativeSelectOption>
+                {speciesOptions.map((species) => (
+                  <NativeSelectOption key={species} value={`species:${species}`}>{species || "Unknown species"}</NativeSelectOption>
+                ))}
+              </NativeSelect>
+            </div>
+            <div className="grid w-44 max-w-full gap-2">
+              <Label htmlFor={lengthId}>Minimum length (inches)</Label>
+              <Input id={lengthId} type="number" min={0} step={.25}
+                value={filters.minimumLength || 12}
+                onChange={(event) => {
+                  const minimumLength = Number(event.target.value)
+                  if (Number.isFinite(minimumLength) && minimumLength >= 0) {
+                    onFiltersChange({ ...filters, minimumLength })
+                  }
+                }} />
+            </div>
+            <Button variant="outline" size="sm" disabled={filters.species === null && filters.minimumLength === 0}
+              onClick={() => onFiltersChange({ species: null, minimumLength: 0 })}>
+              Reset filters
+            </Button>
+          </div>
         )}
         {status}
         {total === 0 ? (
