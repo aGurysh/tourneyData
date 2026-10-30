@@ -38,10 +38,10 @@ export const queryPersistOptions = {
         } catch {
           // In-memory caching still works when browser storage is blocked.
         }
-      },
-    },
-    retry: removeOldestQuery,
-  }),
+      },  
+    },  
+    retry: removeOldestQuery,  
+  }),  
   maxAge: CACHE_MAX_AGE,
   buster: "summary-v1",
   dehydrateOptions: {

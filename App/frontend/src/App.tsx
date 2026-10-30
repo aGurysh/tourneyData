@@ -32,7 +32,7 @@ export default function App() {
       <header className="border-b bg-card">
         <div className="mx-auto grid max-w-[100rem] grid-cols-[1fr_auto] items-center gap-4 px-4 py-6 sm:px-8 lg:grid-cols-[1fr_auto_1fr]">
           <p className="text-lg font-semibold tracking-tight">
-             Kayak Tournament Advantage
+            Tournament Insights
           </p>
           <div className="col-span-2 row-start-2 flex min-w-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:col-span-1 lg:col-start-2 lg:row-start-1">
             <TabsList variant="line" aria-label="Analytics views" className="mx-auto shrink-0 group-data-horizontal/tabs:h-auto">
