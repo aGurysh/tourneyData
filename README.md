@@ -1,6 +1,8 @@
-# Kayak Tournament analytics
+# Kayak Tournament Analytics
 
-The app is comprised of a React/Vite frontend, a FastAPI/PostgreSQL backend.
+This application gives anglers access to deeper insights from kayak fishing tournament results. All tournament data is collected from public TourneyX result pages. This software is not a replacement for TourneyX, or meant to compete with it in any way. The goal is to provide data visualizations and summaries based on the data that is already publicly available.
+
+The tech stack includes a React/Vite frontend, a FastAPI/PostgreSQL backend.
 
 ## Project layout
 
