@@ -1,0 +1,19 @@
+.git
+.github
+.vscode
+.agents
+.codex
+.aws
+**/.venv
+**/node_modules
+**/dist
+**/__pycache__
+**/.pytest_cache
+**/*.pyc
+**/.env
+**/.env.*
+**/output
+**/tests
+planning
+legacy
+ legacy

@@ -46,18 +46,25 @@ intentional dependency updates, and verification commands.
 
 ## Continuous integration
 
+For the private Render preview, see the [deployment guide](App/deploy/README.md)
+and [Render Blueprint](render.yaml).
+
 The [CI workflow](.github/workflows/ci.yml) runs on pull requests, pushes to
-`main`, and manual runs from GitHub's Actions tab. It provides two checks:
+`main`, and manual runs from GitHub's Actions tab. It provides three checks:
 
 - **Frontend tests and build** installs the pinned Node/npm versions, runs
   `npm ci`, then `npm test` and `npm run build`.
 - **Backend tests with PostgreSQL** installs the pinned Python/uv versions,
   runs `uv sync --locked --extra dev`, then runs the full pytest suite against a
   fresh PostgreSQL 18 service container.
+- **Deployment image and smoke test** builds the production Docker image, applies
+  migrations to another disposable PostgreSQL 18 database, and verifies protected
+  frontend/API access, built assets, and database reads over HTTP.
 
-The test database exists only for that backend job. Its credentials are local
+Each test database exists only for its job. Its credentials are local
 test values in the workflow; no repository secrets or hosted database are needed.
-Both database URL variables point to this disposable database. The fixtures apply
-migrations to an isolated schema and create their own test data, so CI needs no
-production data, ingestion run, or separate migration step. GitHub removes the
-service container when the job ends. New commits cancel older runs for the same PR.
+The backend job's database URL variables point to its disposable database. Its
+fixtures apply migrations to an isolated schema and create their own test data;
+the deployment job exercises the explicit pre-deploy migration command. Neither
+needs production data or an ingestion run. GitHub removes the service containers
+when the jobs end. New commits cancel older runs for the same PR.

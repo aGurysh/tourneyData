@@ -32,7 +32,7 @@ async def lifespan(app: FastAPI):
         engine.dispose()
 
 
-def create_app() -> FastAPI:
+def create_app(*, api_prefix: str = "") -> FastAPI:
     load_settings()
     app = FastAPI(
         title="Fishing Tournament Analytics API", version="0.1.0",
@@ -52,8 +52,10 @@ def create_app() -> FastAPI:
         return JSONResponse(status_code=503, content={"detail": "Database temporarily unavailable"})
 
     app.include_router(health.router)
-    app.include_router(tournaments.router)
-    app.include_router(locations.router)
+    if api_prefix:
+        app.include_router(health.router, prefix=api_prefix)
+    app.include_router(tournaments.router, prefix=api_prefix)
+    app.include_router(locations.router, prefix=api_prefix)
     return app
 
 

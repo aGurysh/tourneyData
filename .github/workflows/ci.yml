@@ -76,3 +76,82 @@ jobs:
         run: uv sync --locked --extra dev
       - name: Run backend tests, including migrations and database integration
         run: .venv/bin/python -m pytest -q
+
+  deployment:
+    name: Deployment image and smoke test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      # Disposable CI-only credentials, never deployment secrets.
+      DATABASE_URL: postgresql+psycopg://tourney_test:tourney_ci_only@127.0.0.1:5432/tourney_test
+      PREVIEW_USERNAME: ci-preview
+      PREVIEW_PASSWORD: ci-preview-only
+      PORT: "10000"
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: tourney_test
+          POSTGRES_PASSWORD: tourney_ci_only
+          POSTGRES_DB: tourney_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tourney_test -d tourney_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Build production image
+        run: docker build -f App/deploy/Dockerfile -t tourney-preview:ci .
+      - name: Migrate disposable database using the production image
+        run: docker run --rm --network host --env DATABASE_URL tourney-preview:ci .venv/bin/alembic upgrade head
+      - name: Start private preview
+        run: >-
+          docker run --detach --network host --name tourney-preview
+          --env DATABASE_URL --env PREVIEW_USERNAME --env PREVIEW_PASSWORD --env PORT
+          tourney-preview:ci
+      - name: Wait for readiness
+        run: curl --fail --silent --show-error --retry 20 --retry-connrefused --retry-delay 1 http://127.0.0.1:10000/health
+      - name: Verify private pages, built assets, and database reads
+        run: |
+          python3 - <<'PY'
+          import base64
+          import json
+          import os
+          import re
+          from urllib.error import HTTPError
+          from urllib.request import Request, urlopen
+
+          base = "http://127.0.0.1:10000"
+          for path in ("/", "/api/tournaments", "/api/health", "/docs", "/openapi.json"):
+              try:
+                  urlopen(base + path, timeout=10)
+              except HTTPError as exc:
+                  assert exc.code == 401, (path, exc.code)
+              else:
+                  raise AssertionError(f"Unprotected preview: {path}")
+
+          token = base64.b64encode(f"{os.environ['PREVIEW_USERNAME']}:{os.environ['PREVIEW_PASSWORD']}".encode()).decode()
+          def get(path):
+              return urlopen(Request(base + path, headers={"Authorization": f"Basic {token}"}), timeout=10)
+
+          with get("/") as response:
+              assert response.headers["Cache-Control"] == "no-store"
+              html = response.read().decode()
+          assets = re.findall(r'(?:src|href)="(/assets/[^\"]+)"', html)
+          assert assets, "Built frontend assets missing"
+          for asset in assets:
+              with get(asset) as response:
+                  assert response.status == 200
+          with get("/api/tournaments") as response:
+              assert json.load(response) == {"items": [], "total": 0, "limit": 50, "offset": 0}
+          print("Private frontend, assets, and PostgreSQL API smoke checks passed.")
+          PY
+      - name: Show container logs on failure
+        if: failure()
+        run: docker logs tourney-preview || true
+      - name: Stop preview container
+        if: always()
+        run: docker rm --force tourney-preview || true

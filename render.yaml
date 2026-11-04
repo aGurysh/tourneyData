@@ -1,0 +1,39 @@
+# One private preview environment. Review Render's estimate before provisioning.
+services:
+  - type: web
+    name: tourney-preview
+    runtime: docker
+    plan: 0.5c-512mb
+    region: virginia
+    numInstances: 1
+    dockerfilePath: ./App/deploy/Dockerfile
+    dockerContext: .
+    autoDeployTrigger: checksPass
+    preDeployCommand: .venv/bin/alembic upgrade head
+    healthCheckPath: /health
+    maxShutdownDelaySeconds: 30
+    envVars:
+      - key: RENDER_DATABASE_URL
+        fromDatabase:
+          name: tourney-preview-db
+          property: connectionString
+      - key: DEPLOYMENT_ACCESS
+        value: private
+      - key: PREVIEW_USERNAME
+        sync: false
+      - key: PREVIEW_PASSWORD
+        sync: false
+      - key: CORS_ORIGINS
+        value: ""
+
+databases:
+  - name: tourney-preview-db
+    plan: 0.1c-256mb
+    region: virginia
+    postgresMajorVersion: "18"
+    databaseName: tourney
+    user: tourney_owner
+    diskSizeGB: 1
+    storageAutoscalingEnabled: false
+    # Add only your administrative IP /32 here when using local ingestion.
+    ipAllowList: []
