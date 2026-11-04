@@ -9,7 +9,10 @@ export function createQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: "static", // db modified infrequently, just gc after 24h
+        // Reuse recent results, but permit invalidation after an admin import.
+        staleTime: 5 * 60 * 1000,
+        // Restored data (including an empty list) must be checked on reload.
+        refetchOnMount: "always",
         gcTime: CACHE_MAX_AGE,
         retry: 1,
       },

@@ -26,7 +26,7 @@ function mockStorage() {
   return storage
 }
 
-test("cached summaries survive reload without fetching fresh data again", async () => {
+test("cached summaries survive reload and fresh data can be reused", async () => {
   mockStorage()
   const original = createQueryClient()
   const reloaded = createQueryClient()
@@ -49,6 +49,43 @@ test("cached summaries survive reload without fetching fresh data again", async 
     assert.equal(requests, 0)
     assert.equal(reloaded.getQueryData(["tournaments", "https://other-api", "detail", 42]), undefined)
   } finally {
+    original.clear()
+    reloaded.clear()
+  }
+})
+
+test("mount revalidates a restored empty list after a tournament is imported", async () => {
+  mockStorage()
+  const original = createQueryClient()
+  const reloaded = createQueryClient()
+  let unsubscribe = () => {}
+  try {
+    await original.fetchQuery({ queryKey: listKey, queryFn: async () => [], meta: { persist: true } })
+    await persistQueryClientSave({ queryClient: original, ...queryPersistOptions })
+    await persistQueryClientRestore({ queryClient: reloaded, ...queryPersistOptions })
+    assert.deepEqual(reloaded.getQueryData(listKey), [])
+
+    let requests = 0
+    const observer = new QueryObserver(reloaded, {
+      queryKey: listKey,
+      queryFn: async () => { requests++; return [summary] },
+      meta: { persist: true },
+    })
+    unsubscribe = observer.subscribe(() => {})
+    // Show saved data immediately while the mounted query checks the server.
+    assert.deepEqual(observer.getCurrentResult().data, [])
+    await new Promise(setImmediate)
+    assert.equal(requests, 1)
+    assert.deepEqual(observer.getCurrentResult().data, [summary])
+    assert.equal(observer.getCurrentResult().isFetchedAfterMount, true)
+
+    // The updated list, rather than the old empty result, survives the next reload.
+    await persistQueryClientSave({ queryClient: reloaded, ...queryPersistOptions })
+    original.clear()
+    await persistQueryClientRestore({ queryClient: original, ...queryPersistOptions })
+    assert.deepEqual(original.getQueryData(listKey), [summary])
+  } finally {
+    unsubscribe()
     original.clear()
     reloaded.clear()
   }
@@ -87,38 +124,7 @@ test("expired, incompatible, and corrupt snapshots are discarded", async () => {
 })
 
 
-// swap with below test if we change 'static' staleTime
-// test("refresh updates a cached summary and failed refresh retains its last data", async () => {
-//   const client = createQueryClient()
-//   let fail = false
-//   let requests = 0
-//   const observer = new QueryObserver(client, {
-//     queryKey: detailKey,
-//     queryFn: async () => {
-//       requests++
-//       if (fail) throw new Error("API unavailable")
-//       return { ...summary, name: `Revision ${requests}` }
-//     },
-//     retry: false,
-//   })
-//   const unsubscribe = observer.subscribe(() => {})
-//   try {
-//     await observer.refetch()
-//     const before = requests
-//     await client.invalidateQueries({ queryKey: ["tournaments", "/api"] })
-//     assert.equal(requests, before + 1)
-//     const latest = client.getQueryData(detailKey)
-//     fail = true
-//     await observer.refetch()
-//     assert.deepEqual(client.getQueryData(detailKey), latest)
-//     assert.equal(observer.getCurrentResult().isRefetchError, true)
-//   } finally {
-//     unsubscribe()
-//     client.clear()
-//   }
-// })
-
-test("failed refresh retains its last data", async () => {
+test("Refresh invalidation fetches new data and a failed refresh retains it", async () => {
   const client = createQueryClient()
   let fail = false
   let requests = 0
@@ -134,7 +140,11 @@ test("failed refresh retains its last data", async () => {
   const unsubscribe = observer.subscribe(() => {})
   try {
     await observer.refetch()
+    const before = requests
+    await client.invalidateQueries({ queryKey: ["tournaments", "/api"] })
+    assert.equal(requests, before + 1)
     const latest = client.getQueryData(detailKey)
+    assert.equal(latest.name, `Revision ${before + 1}`)
     fail = true
     await observer.refetch()
     assert.deepEqual(client.getQueryData(detailKey), latest)
