@@ -39,8 +39,8 @@ export default function App() {
               <TabsTrigger value="single" className="whitespace-nowrap px-4 py-2">
                 Single Tournament Summary
               </TabsTrigger>
-              <TabsTrigger value="aggregated" className="whitespace-nowrap px-4 py-2">
-                Aggregated Results
+              <TabsTrigger disabled value="aggregated" className="whitespace-nowrap px-4 py-2">
+                Aggregated Results (coming soon)
               </TabsTrigger>
             </TabsList>
           </div>
