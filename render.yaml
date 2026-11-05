@@ -35,5 +35,4 @@ databases:
     user: tourney_owner
     diskSizeGB: 1
     storageAutoscalingEnabled: false
-    # Add only your administrative IP /32 here when using local ingestion.
-    ipAllowList: []
+    ipAllowList: [] # prefer setting ip for ingestion from render dashboard

@@ -62,11 +62,7 @@ The deployed image has no browser binaries, ingestion outputs, or scheduler.
 Run the existing ingestion process on your computer using the same release's
 code and retain/back up its local raw snapshots and reports.
 
-The Blueprint blocks all external database connections by default. Before a local
-import, add your current public IP as a `/32` entry in `render.yaml`'s database
-`ipAllowList` and sync the Blueprint. Keep this list authoritative; a dashboard-only
-change can be overwritten by a later sync. Do not allow `0.0.0.0/0`.
-
+Keep `render.yaml`'s database `ipAllowList: []` as the normal configuration: temporarily add IP as allowed source via render dashboard
 Use Render's **external** connection details and provider-required TLS for your
 local `DATABASE_URL`, using the explicit `postgresql+psycopg://` scheme. Supply it
 through a private environment/secret file rather than pasting credentials into
@@ -81,7 +77,9 @@ App/.venv/bin/python -m backend.ingestion --offline
 
 Use location IDs from this database, or name/state mappings. Existing tournaments
 are skipped. Verify an imported tournament in the UI, including standings, bite
-windows, and weather. Remove your IP entry and sync again if access is temporary.
+windows, and weather. Remove your temporary IP entry in the Render Dashboard when
+finished; no redeploy or Blueprint sync is needed to remove it. Keep the YAML's
+`ipAllowList: []` unchanged so future syncs preserve the normal configuration.
 The importer does not run migrations or require redeploying the web app.
 
 ## Release and recovery rehearsal
