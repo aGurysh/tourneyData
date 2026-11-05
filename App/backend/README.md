@@ -297,7 +297,7 @@ From `App`, install/update the dependencies and start the development server:
 
 ```bash
 uv sync --locked --extra dev
-.venv/bin/uvicorn backend.main:app --reload
+.venv/bin/uvicorn backend.api.main:app --reload
 ```
 
 Keep PostgreSQL running. Visit [interactive API documentation](http://localhost:8000/docs)

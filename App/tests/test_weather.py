@@ -7,7 +7,7 @@ import httpx
 import pytest
 
 from backend.api.dependencies import get_session
-from backend.main import create_app
+from backend.api.main import create_app
 from backend.weather import VARIABLES, WeatherProviderError, WeatherService, WeatherUnavailable
 
 UTC = timezone.utc
@@ -134,7 +134,7 @@ def test_future_event_does_not_request_historical_weather(payload):
 
 @pytest.fixture
 def weather_api(monkeypatch, payload):
-    monkeypatch.setattr("backend.main.create_db_engine", Mock)
+    monkeypatch.setattr("backend.api.main.create_db_engine", Mock)
     weather, calls = service(payload)
     session = Mock()
     session.get.return_value = tournament()

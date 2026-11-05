@@ -1,4 +1,4 @@
-"""Single-origin production app. Local development still uses backend.main."""
+"""Single-origin production app. Local development still uses backend.api.main."""
 
 import base64
 import binascii
@@ -11,7 +11,7 @@ from starlette.responses import PlainTextResponse
 from starlette.staticfiles import StaticFiles
 
 from backend.config import APP_ROOT, load_settings
-from backend.main import create_app
+from backend.api.main import create_app
 
 
 class PreviewAccess:

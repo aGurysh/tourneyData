@@ -108,7 +108,7 @@ def test_missing_frontend_fails_at_startup(preview, tmp_path):
 
 def test_production_api_reads_postgres(preview, connection, monkeypatch):
     app, _, _, _ = preview
-    monkeypatch.setattr("backend.main.create_db_engine", lambda: connection.engine)
+    monkeypatch.setattr("backend.api.main.create_db_engine", lambda: connection.engine)
 
     def test_session():
         with Session(bind=connection, join_transaction_mode="create_savepoint") as session:

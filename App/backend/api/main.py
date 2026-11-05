@@ -1,4 +1,4 @@
-"""Run from App: uvicorn backend.main:app --reload."""
+"""Run from App: uvicorn backend.api.main:app --reload."""
 
 from contextlib import asynccontextmanager
 import logging
