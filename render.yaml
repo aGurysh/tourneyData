@@ -1,4 +1,4 @@
-# One private preview environment. Review Render's estimate before provisioning.
+# Private preview environment
 services:
   - type: web
     name: tourney-preview
