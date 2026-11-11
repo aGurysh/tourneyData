@@ -154,6 +154,8 @@ def test_weather_endpoint_serialization(weather_api):
     assert data["starts_at"] == "2026-07-18T09:45:00Z"
     assert data["data_kind"] == "historical_reanalysis"
     assert data["attribution"] == "Weather data by Open-Meteo, CC BY 4.0"
+    assert data["license_url"] == "https://creativecommons.org/licenses/by/4.0/"
+    assert data["modifications"] == "Filtered to tournament hours; fields renamed."
     assert client.get("/tournaments/1/weather").json() == data
     assert len(calls) == 1
 

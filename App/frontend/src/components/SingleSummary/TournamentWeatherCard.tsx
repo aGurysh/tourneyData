@@ -117,9 +117,15 @@ export default function TournamentWeatherCard({ tournamentId }: { tournamentId: 
         )}
       </CardContent>
       {weather && (
-        <CardFooter className="flex-wrap justify-between gap-2 test-sm text-muted-foreground">
+        <CardFooter className="flex-wrap justify-between gap-2 text-sm text-muted-foreground">
           <p>Estimated weather near tournament location</p>
-          <a href="https://open-meteo.com/" target="_blank" rel="noreferrer" className="underline underline-offset-4 hover:text-foreground">{weather.attribution}</a>
+          <p>
+            Weather data by{" "}
+            <a href="https://open-meteo.com/" target="_blank" rel="noreferrer" className="underline underline-offset-4 hover:text-foreground">Open-Meteo</a>
+            {" · "}
+            <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer" className="underline underline-offset-4 hover:text-foreground">CC BY 4.0</a>
+          </p>
+          <p className="w-full">Adapted: filtered to tournament hours, pressure converted to inHg, ranges calculated, and values rounded.</p>
         </CardFooter>
       )}
     </Card>

@@ -39,6 +39,8 @@ class TournamentWeather(BaseModel):
     source: Literal["Open-Meteo"] = "Open-Meteo"
     source_url: str = "https://open-meteo.com/"
     attribution: str = "Weather data by Open-Meteo, CC BY 4.0"
+    license_url: str = "https://creativecommons.org/licenses/by/4.0/"
+    modifications: str = "Filtered to tournament hours; fields renamed."
     data_kind: Literal["historical_reanalysis"] = "historical_reanalysis"
     timezone: str
     starts_at: datetime

@@ -54,6 +54,8 @@ export interface TournamentWeather {
   source: string
   source_url: string
   attribution: string
+  license_url: string
+  modifications: string
   data_kind: "historical_reanalysis"
   timezone: string
   starts_at: string
