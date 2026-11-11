@@ -26,18 +26,20 @@ export default function SingleSummary() {
     isTournamentId,
   )
   useEffect(() => {
-    // Only clear a missing selection after a successful list fetch, never
+    // Only replace a missing selection after a successful list fetch, never
     // while restoring the cache or when a background refresh has failed.
     if (tournamentsQuery.isSuccess && tournamentsQuery.isFetchedAfterMount) {
       setSelectedTournamentId((id) =>
-        tournaments?.some((item) => String(item.id) === id) ? id : "",
+        tournaments?.some((item) => String(item.id) === id)
+          ? id
+          : tournaments?.[0] ? String(tournaments[0].id) : "",
       )
     }
   }, [tournaments, tournamentsQuery.isSuccess, tournamentsQuery.isFetchedAfterMount, setSelectedTournamentId])
 
   const availableTournamentId = tournaments?.some(
     (tournament) => String(tournament.id) === selectedTournamentId,
-  ) ? selectedTournamentId : ""
+  ) ? selectedTournamentId : tournaments?.[0] ? String(tournaments[0].id) : ""
 
   const placeholder = loading
     ? "Loading tournaments…"

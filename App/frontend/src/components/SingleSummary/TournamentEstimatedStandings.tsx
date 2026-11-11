@@ -28,7 +28,6 @@ export default function TournamentEstimatedStandings({ tournamentId }: { tournam
   const ready = !!detail.data && catches.data !== undefined
   const failed = detail.isError || catches.isError
   const fetching = detail.isFetching || catches.isFetching
-  const hasTies = new Set(anglers.map((angler) => angler.total)).size < anglers.length
 
   return (
     <Card role="article" aria-labelledby={titleId} className="min-w-0 lg:col-span-2">
@@ -65,7 +64,7 @@ export default function TournamentEstimatedStandings({ tournamentId }: { tournam
                   <span className="test-sm text-muted-foreground">{selected.length === 0 ? "Select anglers to highlight their standings. · " : "Final scoring totals · "}{anglers.length} anglers with catches</span>
                 </div>
                 <EstimatedStandingsChart key={JSON.stringify(selected.map((angler) => angler.id))} anglers={anglers} selected={selected} start={start} end={end} timeZone={detail.data!.timezone} />
-                <p className="test-sm text-muted-foreground">Estimated from final scoring catches and photo times. Earlier culled catches are unavailable, so historical totals may be understated.{hasTies ? " Official tie-break results are unavailable; equal totals share a final place." : ""}</p>
+                <p className="test-sm text-muted-foreground">Estimated from final scoring catches and photo times. (culled fish not included)</p>
               </>
             ) : <p className="text-muted-foreground">No catches with usable times and lengths to display.</p>)}
             {excludedCount > 0 && <p className="test-sm text-muted-foreground">{excludedCount} {excludedCount === 1 ? "catch excluded" : "catches excluded"} because the angler, time, or length is invalid.</p>}
