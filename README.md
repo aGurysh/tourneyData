@@ -4,67 +4,66 @@ This application gives anglers access to deeper insights from kayak fishing tour
 
 The tech stack includes a React/Vite frontend, a FastAPI/PostgreSQL backend.
 
-## Project layout
-
-```text
-App/
-├── backend/                # FastAPI API, database models, and ingestion
-├── frontend/               # React/Vite web UI
-├── migrations/             # Versioned Alembic schema changes
-├── tests/                  # Backend and ingestion tests
-├── pyproject.toml          # Python dependencies and backend package discovery
-├── uv.lock                 # Locked Python dependencies
-├── alembic.ini
-└── compose.yaml            # Local PostgreSQL database
-DB_SCHEMA.md                # Database schema reference
-```
-
 ## Start locally
 
-1. Follow the [backend guide](App/backend/README.md) to install Python dependencies,
-   configure `App/.env`, start PostgreSQL, apply migrations, and run the API.
-2. Follow the [frontend guide](App/frontend/README.md) to install frontend
-   dependencies and start Vite. The frontend proxies `/api` to the backend on
-   port 8000 during development.
-3. Follow the [ingestion guide](App/backend/ingestion/README.md) to collect and
-   import tournament data.
+Run each block from the repository root. Keep the API and client running in separate terminals.
 
-Backend commands generally run from `App`; frontend commands run from
-`App/frontend`. The ingestion guide provides commands for the repository root.
+**Database**
 
-## Dependency installs and updates
+```bash
+cd App
+docker compose up -d --wait db
+```
 
-The pinned tools are Python **3.12.3** (`App/.python-version`), uv **0.13.6**
-(`App/pyproject.toml`), Node **24.18.0** (`App/frontend/.nvmrc`), and npm
-**11.16.0** (`App/frontend/package.json`). Docker with Docker Compose is needed
-for the local database.
+**API** — http://localhost:8000/docs
 
-Commit `App/uv.lock` and `App/frontend/package-lock.json`. Use
-`uv sync --locked --extra dev` from `App` and `npm ci` from `App/frontend`
-for reproducible development installs. See the component guides for setup,
-intentional dependency updates, and verification commands.
+```bash
+cd App
+.venv/bin/uvicorn backend.api.main:app --reload
+```
 
-## Continuous integration
+**Client** — http://localhost:5173
 
-For the private Render preview, see the [deployment guide](App/deploy/README.md)
-and [Render Blueprint](render.yaml).
+```bash
+cd App/frontend
+npm run dev
+```
 
-The [CI workflow](.github/workflows/ci.yml) runs on pull requests, pushes to
-`main`, and manual runs from GitHub's Actions tab. It provides three checks:
+Vite forwards `/api` to the API on port 8000. Stop the API/client with Ctrl+C;
+stop the database with `cd App && docker compose down` (data is retained).
 
-- **Frontend tests and build** installs the pinned Node/npm versions, runs
-  `npm ci`, then `npm test` and `npm run build`.
-- **Backend tests with PostgreSQL** installs the pinned Python/uv versions,
-  runs `uv sync --locked --extra dev`, then runs the full pytest suite against a
-  fresh PostgreSQL 18 service container.
-- **Deployment image and smoke test** builds the production Docker image, applies
-  migrations to another disposable PostgreSQL 18 database, and verifies protected
-  frontend/API access, built assets, and database reads over HTTP.
+## First-time setup
 
-Each test database exists only for its job. Its credentials are local
-test values in the workflow; no repository secrets or hosted database are needed.
-The backend job's database URL variables point to its disposable database. Its
-fixtures apply migrations to an isolated schema and create their own test data;
-the deployment job exercises the explicit pre-deploy migration command. Neither
-needs production data or an ingestion run. GitHub removes the service containers
-when the jobs end. New commits cancel older runs for the same PR.
+Requires Docker Compose, Python **3.12.3**, uv **0.13.6**, Node **24.18.0**,
+and npm **11.16.0**. Runtime versions are pinned in the app configuration.
+
+```bash
+cd App
+cp -n .env.example .env
+uv sync --locked --extra dev
+docker compose up -d --wait db
+.venv/bin/alembic upgrade head
+```
+
+For a populated database predating angler IDs, use the
+[staged backfill](App/backend/ingestion/README.md#legacy-angler-backfill) before upgrading.
+
+In another terminal, from the repository root (using nvm):
+
+```bash
+cd App/frontend
+nvm install
+nvm use
+npm ci
+```
+
+The database starts empty. [Import tournaments](App/backend/ingestion/README.md)
+to populate the client. Local configuration lives in `App/.env`; keep it out of Git.
+
+## Reference
+
+- [Backend tests, migrations, and API checks](App/backend/README.md)
+- [Frontend checks and configuration](App/frontend/README.md)
+- [Ingestion commands](App/backend/ingestion/README.md)
+- [Deployment and backups](App/deploy/README.md)
+- [Database tables](DB_SCHEMA.md)
