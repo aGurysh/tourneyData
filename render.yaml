@@ -9,14 +9,14 @@ services:
     dockerfilePath: ./App/deploy/Dockerfile
     dockerContext: .
     autoDeployTrigger: checksPass
-    preDeployCommand: .venv/bin/alembic upgrade head
+    preDeployCommand: .venv/bin/python -m backend.db.migrate
     healthCheckPath: /health
     maxShutdownDelaySeconds: 30
     envVars:
-      - key: RENDER_DATABASE_URL
-        fromDatabase:
-          name: tourney-preview-db
-          property: connectionString
+      - key: DATABASE_URL
+        sync: false # internal connection using the restricted API login
+      - key: MIGRATION_DATABASE_URL
+        sync: false # internal connection using the existing schema owner
       - key: DEPLOYMENT_ACCESS
         value: private
       - key: PREVIEW_USERNAME

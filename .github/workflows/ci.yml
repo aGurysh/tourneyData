@@ -106,11 +106,18 @@ jobs:
       - name: Build production image
         run: docker build -f App/deploy/Dockerfile -t tourney-preview:ci .
       - name: Migrate disposable database using the production image
-        run: docker run --rm --network host --env DATABASE_URL tourney-preview:ci .venv/bin/alembic upgrade head
+        run: docker run --rm --network host --env MIGRATION_DATABASE_URL="$DATABASE_URL" tourney-preview:ci .venv/bin/python -m backend.db.migrate
+      - name: Configure restricted database logins
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          docker exec "$POSTGRES_CONTAINER" psql -U tourney_test -d tourney_test -v ON_ERROR_STOP=1 -c "CREATE ROLE tourney_api LOGIN PASSWORD 'ci-api-only'; CREATE ROLE tourney_importer LOGIN PASSWORD 'ci-import-only';"
+          docker exec -i "$POSTGRES_CONTAINER" psql -U tourney_test -d tourney_test -v api_role=tourney_api -v importer_role=tourney_importer < App/deploy/database-grants.sql
       - name: Start private preview
         run: >-
           docker run --detach --network host --name tourney-preview
-          --env DATABASE_URL --env PREVIEW_USERNAME --env PREVIEW_PASSWORD --env PORT
+          --env DATABASE_URL=postgresql+psycopg://tourney_api:ci-api-only@127.0.0.1:5432/tourney_test
+          --env PREVIEW_USERNAME --env PREVIEW_PASSWORD --env PORT
           tourney-preview:ci
       - name: Wait for readiness
         run: curl --fail --silent --show-error --retry 20 --retry-connrefused --retry-delay 1 http://127.0.0.1:10000/health
