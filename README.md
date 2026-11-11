@@ -45,9 +45,6 @@ docker compose up -d --wait db
 .venv/bin/alembic upgrade head
 ```
 
-For a populated database predating angler IDs, use the
-[staged backfill](App/backend/ingestion/README.md#legacy-angler-backfill) before upgrading.
-
 In another terminal, from the repository root (using nvm):
 
 ```bash

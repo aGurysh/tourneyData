@@ -20,9 +20,7 @@ before starting; then open http://localhost:10000.
    storage, and the provisioning estimate before creating paid resources.
 2. Supply `PREVIEW_USERNAME` (no colon) and a long random `PREVIEW_PASSWORD` as
    server secrets. Set the workspace overlapping deploy policy to **Wait**.
-3. The pre-deploy command applies migrations. For populated pre-angler databases,
-   complete the [staged backfill](../backend/ingestion/README.md#legacy-angler-backfill)
-   first. Do not cancel active migrations.
+3. The pre-deploy command applies migrations. Do not cancel active migrations.
 4. Open the service's HTTPS URL. Verify `/` returns 401 without credentials, sign
    in and check the UI and `/api/health`, then check public `/health` returns 200.
 

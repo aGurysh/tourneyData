@@ -76,19 +76,3 @@ App/.venv/bin/python -m backend.ingestion.cli path/to/export.json --metadata-onl
 
 Replacement preserves the tournament ID. Review timestamps: older snapshots are
 not automatically rejected. `--replace` and `--metadata-only` are mutually exclusive.
-
-## Legacy angler backfill
-
-For populated databases predating angler IDs, run in order:
-
-```bash
-App/.venv/bin/alembic -c App/alembic.ini upgrade 0003
-App/.venv/bin/python -m backend.ingestion --backfill --dry-run
-App/.venv/bin/python -m backend.ingestion --backfill
-# Only after the report has no failures:
-App/.venv/bin/alembic -c App/alembic.ini upgrade head
-```
-
-Backfill links existing catches using matching raw snapshots without replacing
-them. Identity is never guessed from names. Legacy cleaned exports without angler
-IDs require matching sibling `.raw.json` files.

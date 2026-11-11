@@ -28,7 +28,6 @@ the test user needs permission to create schemas.
 ```
 
 Add revisions instead of editing migrations already applied to shared databases.
-For pre-angler data, follow the [backfill sequence](ingestion/README.md#legacy-angler-backfill).
 
 ## API checks
 
