@@ -4,3 +4,7 @@ output/
 planning/
 legacy/
 / legacy/
+catches*.json
+example-tourney.html
+biteWindows*.png
+liveStandings.png
