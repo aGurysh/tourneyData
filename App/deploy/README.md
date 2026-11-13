@@ -140,15 +140,3 @@ Keep configuration/role instructions separately. The recovery point is the lates
 verified export; measure the two-hour recovery target during rehearsal. Check
 [Render recovery settings](https://render.com/docs/postgresql-backups) for provider
 retention and temporary database costs; download exports you intend to retain.
-
-## Release and public launch
-
-Record the commit and Alembic revision before release. Verify authentication,
-health, and representative pages after deployment or rollback. Image rollback does
-not undo migrations; use code compatible with the current schema.
-
-Before public launch, finish restricted API credentials, restore rehearsal,
-uptime/error alerts, performance checks, and source attribution. Set
-`DEPLOYMENT_ACCESS: public` in `render.yaml`, sync, and verify unauthenticated access.
-Budget for separate private staging before creating it. Check current
-[pricing](https://render.com/pricing) before changing resources.
