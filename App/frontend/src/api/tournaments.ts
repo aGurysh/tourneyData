@@ -7,6 +7,7 @@ export interface Tournament {
 }
 
 export interface TournamentDetail extends Tournament {
+  angler_count: number
   timezone: string
   winning_length_inches: string | null
   top_10_percent_length_inches: string | null

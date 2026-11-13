@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import func, select
 
 from backend.api.dependencies import DatabaseSession, Weather
-from backend.db.models import Catch, Location, Species, Tournament, TournamentLocation
+from backend.db.models import Catch, Location, Species, Tournament, TournamentEntry, TournamentLocation
 from backend.api.routes.common import Limit, Offset, OptionalId, TournamentId
 from backend.api.schemas import CatchResponse, Page, TournamentDetail, TournamentResponse, TournamentWeather
 from backend.weather import WeatherProviderError, WeatherTimeout, WeatherUnavailable
@@ -87,6 +87,10 @@ def get_tournament(tournament_id: TournamentId, session: DatabaseSession):
         .group_by(Species.name).order_by(Species.name)
     ).mappings().all()
     return dict(row) | {
+        "angler_count": session.scalar(
+            select(func.count()).select_from(TournamentEntry)
+            .where(TournamentEntry.tournament_id == tournament_id)
+        ),
         "locations": locations,
         "species_caught": [item["species_name"] for item in species_counts if item["species_name"] is not None],
         "species_catch_counts": species_counts,

@@ -51,6 +51,22 @@ export default function TournamentSummaryCard({ tournamentId }: { tournamentId: 
               <dt className="text-muted-foreground">Tournament Name</dt>
               <dd className="mt-1 break-words font-medium">{tournament.name}</dd>
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <dt className="text-muted-foreground">Tournament Date</dt>
+                <dd className="mt-1 font-medium">
+                  <time dateTime={tournament.date}>
+                    {new Date(`${tournament.date}T00:00:00Z`).toLocaleDateString("en-US", {
+                      month: "long", day: "numeric", year: "numeric", timeZone: "UTC",
+                    })}
+                  </time>
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Number of Anglers</dt>
+                <dd className="mt-1 font-medium tabular-nums">{tournament.angler_count?.toLocaleString("en-US") ?? "Not available"}</dd>
+              </div>
+            </div>
             <div>
               <dt className="text-muted-foreground">Location</dt>
               <dd className="mt-1 font-medium">

@@ -123,6 +123,16 @@ def test_details_include_waterbody_boundaries(api_client, sample_data):
     assert api_client.get(f"/tournaments/{sample_data['older']}").json()["species_catch_counts"] == []
 
 
+def test_details_count_entries_including_anglers_without_catches(api_client, connection, sample_data):
+    add_test_identity(connection, sample_data["newer"], "No catches")
+    add_test_identity(connection, sample_data["older"], "Other event angler")
+
+    row = api_client.get(f"/tournaments/{sample_data['newer']}").json()
+    assert row["angler_count"] == 3
+    assert api_client.get(f"/tournaments/{sample_data['older']}").json()["angler_count"] == 1
+    assert api_client.get(f"/tournaments/{sample_data['tied']}").json()["angler_count"] == 0
+
+
 def test_details_include_both_species_from_catches(api_client, connection, sample_data):
     largemouth = connection.scalar(insert(Species).values(name="Largemouth Bass").returning(Species.id))
     connection.execute(insert(Catch).values(

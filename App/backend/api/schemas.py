@@ -86,6 +86,7 @@ class SpeciesCatchCount(BaseModel):
 
 
 class TournamentDetail(TournamentResponse):
+    angler_count: int
     locations: list[TournamentWaterbody]
     species_caught: list[str]
     species_catch_counts: list[SpeciesCatchCount]
