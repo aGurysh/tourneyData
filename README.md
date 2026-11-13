@@ -2,7 +2,8 @@
 
 This application gives anglers access to deeper insights from kayak fishing tournament results. All tournament data is collected from public TourneyX result pages. This software is not a replacement for TourneyX, or meant to compete with it in any way. The goal is to provide data visualizations and summaries based on the data that is already publicly available.
 
-# gifs will go here
+<img width="1400" height="470" alt="summaryAndBite" src="https://github.com/user-attachments/assets/f9371eb6-cdeb-478d-8518-a0e934af7920" />
+
 
 The app is currently deployed via Render, but is a private preview at this time.
 
