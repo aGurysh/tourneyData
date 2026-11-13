@@ -4,6 +4,7 @@ import { useIsFetching, useQuery, useQueryClient } from "@tanstack/react-query"
 import { tournamentQueries, tournamentQueryKey } from "@/api/queries"
 import { Button } from "@/components/ui/button"
 import { usePersistentState } from "@/hooks/usePersistentState"
+import TournamentScoringBreakdown from "./TournamentScoringBreakdown"
 import TournamentSummaryCard from "./TournamentSummaryCard"
 import TournamentBiteWindows from "./TournamentBiteWindows"
 import TournamentWeatherCard from "./TournamentWeatherCard"
@@ -106,6 +107,10 @@ export default function SingleSummary() {
         />
         <TournamentEstimatedStandings
           key={`estimated-standings-${availableTournamentId}`}
+          tournamentId={availableTournamentId ? Number(availableTournamentId) : null}
+        />
+        <TournamentScoringBreakdown
+          key={`scoring-breakdown-${availableTournamentId}`}
           tournamentId={availableTournamentId ? Number(availableTournamentId) : null}
         />
         <TournamentWeatherCard

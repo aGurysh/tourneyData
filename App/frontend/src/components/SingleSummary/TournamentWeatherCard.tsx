@@ -38,7 +38,7 @@ export default function TournamentWeatherCard({ tournamentId }: { tournamentId: 
   ] : []
 
   return (
-    <Card role="article" aria-labelledby={titleId} className="min-w-0 lg:col-span-2">
+    <Card role="article" aria-labelledby={titleId} className="min-w-0 lg:col-span-1">
       <CardHeader>
         <CardTitle><h2 id={titleId}>Tournament Weather</h2></CardTitle>
         <CardDescription>
@@ -73,9 +73,9 @@ export default function TournamentWeatherCard({ tournamentId }: { tournamentId: 
               <p className="text-muted-foreground">No hourly weather available during tournament hours.</p>
             ) : (
               <>
-                <dl className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+                <dl className="flex flex-wrap gap-4">
                   {summaries.map(({ label, icon: Icon, value }) => (
-                    <div key={label} className="space-y-1 rounded-lg bg-muted/50 p-3">
+                    <div key={label} className="shrink-0 space-y-1 whitespace-nowrap rounded-lg bg-muted/50 p-3">
                       <dt className="flex items-center gap-2 test-sm text-muted-foreground"><Icon className="size-4 shrink-0" aria-hidden="true" />{label}</dt>
                       <dd className="text-base font-semibold tabular-nums sm:text-lg">{value}</dd>
                     </div>
