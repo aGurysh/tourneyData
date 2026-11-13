@@ -4,13 +4,17 @@
 
 This application gives anglers access to deeper insights from kayak fishing tournament results. All tournament data is collected from public TourneyX result pages. This software is not a replacement for TourneyX, or meant to compete with it in any way. The goal is to provide data visualizations and summaries based on the data that is already publicly available.
 
+- Tournament overviews
+- "Bite Windows" with species and minimum-length filters.
 - Estimated standings with angler comparison and catch details.
-- Bite Windows with species and minimum-length filters.
-- Historical weather for tournament hours.
+- Scoring breakdowns
+- Historical weather for tournament hours provided by Open-Meteo.
 
 <img width="1400" height="470" alt="Tournament summary and bite windows" src="https://github.com/user-attachments/assets/f9371eb6-cdeb-478d-8518-a0e934af7920" />
 
 <img width="1402" height="543" alt="Estimated Standings" src="https://github.com/user-attachments/assets/ca17002d-a52f-4b46-9a43-f89698e15014" />
+
+<img width="1564" height="793" alt="image" src="https://github.com/user-attachments/assets/8945319d-6abf-4880-89c7-a2e53636db49" />
 
 The app is currently deployed via Render, but is a private preview at this time.
 
