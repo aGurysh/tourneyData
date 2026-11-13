@@ -19,7 +19,7 @@ export function AnglerCombobox({ anglers, value, onValueChange }: {
     <div className="max-w-xl space-y-2">
       <label htmlFor={id} className="text-sm font-medium">Highlighted anglers</label>
       <Combobox.Root multiple items={ids} itemToStringLabel={label} value={value} autoHighlight onValueChange={onValueChange}>
-        <div className="relative">
+        <div className="relative pt-1">
           <Combobox.Chips className="flex min-h-9 flex-wrap items-center gap-1 rounded-lg border border-input bg-background p-1 pr-9 focus-within:ring-2 focus-within:ring-ring">
             <Combobox.Value>
               {(selected: number[]) => selected.map((anglerId) => (
