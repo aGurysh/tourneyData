@@ -1,7 +1,7 @@
 # Kayak Tournament Analytics
 
 [![CI](https://github.com/aGurysh/tourneyData/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aGurysh/tourneyData/actions/workflows/ci.yml)
-[![Render: private preview](https://img.shields.io/badge/Render-private_preview-46E3B7?logo=render&logoColor=white)](https://dashboard.render.com/)
+[![Render: private preview](https://img.shields.io/badge/Render-private_preview-46E3B7?logo=render&logoColor=white)](https://tourney-preview.onrender.com/)
 
 This application gives anglers access to deeper insights from kayak fishing tournament results. All tournament data is collected from public TourneyX result pages. This software is not a replacement for TourneyX, or meant to compete with it in any way. The goal is to provide data visualizations and summaries based on the data that is already publicly available.
 
