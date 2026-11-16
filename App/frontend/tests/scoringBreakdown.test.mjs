@@ -29,3 +29,28 @@ test("preserves empty ranges and handles tournaments with no scoring catches", (
     { lower: 0, upper: 5, count: 0 },
   ])
 })
+
+test("filters anglers by inclusive catch count and averages only matching anglers", () => {
+  const catches = [
+    { angler_id: 1, length_inches: "10" },
+    { angler_id: 2, length_inches: "10" },
+    { angler_id: 2, length_inches: "15" },
+    { angler_id: 3, length_inches: "10" },
+    { angler_id: 3, length_inches: "15" },
+    { angler_id: 3, length_inches: "20" },
+  ]
+  const filtered = buildScoringBreakdown(catches, 5, { minimum: 1, maximum: 2 })
+  assert.equal(filtered.average, 17.5)
+  assert.equal(filtered.bins.reduce((sum, bin) => sum + bin.count, 0), 2)
+  assert.deepEqual(filtered.bins[0], { lower: 25, upper: 30, count: 1 })
+  assert.equal(buildScoringBreakdown(catches, 5, { minimum: 2, maximum: 2 }).average, 25)
+  assert.deepEqual(buildScoringBreakdown(catches, 5, { minimum: 0, maximum: 0 }), {
+    bins: [{ lower: 0, upper: 5, count: 2 }], average: 0,
+  })
+  const includingZero = buildScoringBreakdown(catches, 5, { minimum: 0, maximum: 1 })
+  assert.equal(includingZero.average, 10 / 3)
+  assert.equal(includingZero.bins.reduce((sum, bin) => sum + bin.count, 0), 3)
+  assert.deepEqual(buildScoringBreakdown(catches, 5, { minimum: 4, maximum: 5 }), {
+    bins: [{ lower: 0, upper: 5, count: 0 }], average: null,
+  })
+})
